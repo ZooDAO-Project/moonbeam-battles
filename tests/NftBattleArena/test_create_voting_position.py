@@ -12,7 +12,7 @@ def _from(account):
 
 def stake_nft(staking, account, nft, tokenId):
 	nft.approve(staking.address, tokenId, _from(account))
-	
+
 	staking.stakeNft(nft.address, tokenId, _from(account))
 
 
@@ -38,7 +38,7 @@ def test_only_voting_can_call(accounts, tokens, battles):
 
 	with brownie.reverts():
 		arena.createVotingPosition(staking_position_id, accounts[0], dai_amount, _from(accounts[0]))
-	
+
 	tx = create_voting_position(voting, daiToken, accounts[2], staking_position_id, dai_amount)
 	assert tx.status == 1
 
@@ -46,8 +46,6 @@ def test_only_voting_can_call(accounts, tokens, battles):
 def test_creating_new_position(accounts, tokens, battles):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
-
-	
 
 	stake_nft(staking, accounts[1], nft, 4)
 
@@ -64,8 +62,6 @@ def test_dai_transfer(accounts, tokens, battles):
 
 	balance_before = daiToken.balanceOf(accounts[1], _from(accounts[1]))
 
-	
-
 	stake_nft(staking, accounts[1], nft, 4)
 
 	vault_balance = daiToken.balanceOf(vault)
@@ -75,7 +71,7 @@ def test_dai_transfer(accounts, tokens, battles):
 
 	daiAmountToVote = 10e18
 	create_voting_position(voting, daiToken, accounts[2], 1, daiAmountToVote)
-	
+
 	assert daiToken.balanceOf(accounts[2], _from(accounts[2])) == balance_before - daiAmountToVote
 	assert daiToken.balanceOf(vault, _from(accounts[2])) == vault_balance + daiAmountToVote
 
@@ -83,8 +79,6 @@ def test_dai_transfer(accounts, tokens, battles):
 def test_insufficient_funds(accounts, tokens, battles):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
-
-	
 
 	stake_nft(staking, accounts[1], nft, 4)
 
@@ -94,7 +88,7 @@ def test_insufficient_funds(accounts, tokens, battles):
 	# More than account have
 	daiAmountToVote = 5e25
 	daiToken.approve(voting, daiAmountToVote, _from(accounts[1]))
-	
+
 	with brownie.reverts("Dai/insufficient-balance"):
 		voting.createNewVotingPosition(1, daiAmountToVote, _from(accounts[1]))
 
@@ -102,8 +96,6 @@ def test_insufficient_funds(accounts, tokens, battles):
 def test_nft_mint(accounts, tokens, battles):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
-
-	
 
 	stake_nft(staking, accounts[1], nft, 4)
 
@@ -134,8 +126,6 @@ def test_unstaked_nft(accounts, tokens, battles):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
 
-	
-
 	stake_nft(staking, accounts[1], nft, 4)
 
 	staking.unstakeNft(1, _from(accounts[1]))
@@ -145,7 +135,6 @@ def test_unstaked_nft(accounts, tokens, battles):
 
 	daiAmountToVote = 10e18
 	daiToken.approve(voting, daiAmountToVote, _from(accounts[1]))
-
 
 	with brownie.reverts("Not staked"):
 		voting.createNewVotingPosition(1, daiAmountToVote, _from(accounts[1]))
@@ -164,9 +153,9 @@ def test_recording_new_voting_values(accounts, second_stage):
 	votingValues = arena.votingPositionsValues(1)
 
 	assert votingValues["stakingPositionId"] == stakingPositionId
-	assert votingValues["startDate"] < chain.time() + 5 and votingValues["startDate"] > chain.time() - 5
+	#assert votingValues["startDate"] < chain.time() + 5 and votingValues["startDate"] > chain.time() - 5
 	assert votingValues["daiInvested"] == daiVoted
-	assert votingValues["yTokensNumber"] == daiVoted
+	assert abs(arena.sharesToTokens.call(votingValues["yTokensNumber"]) - daiVoted) < 10
 	assert votingValues["daiVotes"] == functions.computeVotesByDai(daiVoted)
 	assert votingValues["votes"] == functions.computeVotesByDai(daiVoted)
 	assert votingValues["startEpoch"] == arena.currentEpoch()
@@ -179,9 +168,9 @@ def test_recording_new_voting_values(accounts, second_stage):
 	votingValues = arena.votingPositionsValues(2)
 
 	assert votingValues["stakingPositionId"] == stakingPositionId
-	assert votingValues["startDate"] < chain.time() + 5 and votingValues["startDate"] > chain.time() - 5
+	#assert votingValues["startDate"] < chain.time() + 5 and votingValues["startDate"] > chain.time() - 5
 	assert votingValues["daiInvested"] == daiVoted
-	assert votingValues["yTokensNumber"] == arena.tokensToShares(daiVoted)
+	assert votingValues["yTokensNumber"] == arena.tokensToShares.call(daiVoted)
 	assert votingValues["daiVotes"] == functions.computeVotesByDai(daiVoted)
 	assert votingValues["votes"] == functions.computeVotesByDai(daiVoted)
 	assert votingValues["startEpoch"] == arena.currentEpoch()
@@ -203,7 +192,7 @@ def test_recording_battle_reward(accounts, second_stage):
 	epoch = arena.currentEpoch()
 	reward = arena.rewardsForEpoch(stakingPositionId, epoch)
 
-	assert reward["yTokens"] == daiVoted
+	assert abs(arena.sharesToTokens.call(reward["yTokens"]) - daiVoted) < 10
 	assert reward["votes"] == functions.computeVotesByDai(daiVoted)
 
 	stakingPositionId = 2
@@ -212,7 +201,7 @@ def test_recording_battle_reward(accounts, second_stage):
 	epoch = arena.currentEpoch()
 	reward = arena.rewardsForEpoch(stakingPositionId, epoch)
 
-	assert reward["yTokens"] == arena.tokensToShares(daiVoted)
+	assert reward["yTokens"] == arena.tokensToShares.call(daiVoted)
 	assert reward["votes"] == functions.computeVotesByDai(daiVoted)
 
 

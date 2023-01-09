@@ -2,16 +2,19 @@ pragma solidity 0.8.13;
 
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC721/IERC721.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC721/ERC721.sol";
+import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IVault.sol";
 import "./NftBattleArena.sol";
 import "./lib/IterableMapping.sol";
 import "./interfaces/IZooFunctions.sol";
 
+/// @title JackPot
+/// @notice contract for jackpot reward from arena.
 contract Jackpot is ERC721
 {
 	using IterableMapping for IterableMapping.Map;
 
-    IterableMapping.Map internal map;
+	IterableMapping.Map internal map;
 
 	uint256 public positionIndex = 1;
 
@@ -39,7 +42,7 @@ contract Jackpot is ERC721
 
 	event Claimed(uint256 indexed id, uint256 epoch, address owner, address beneficiary, uint256 rewards);
 
-	event WinnerChoosed(uint256 epoch, uint256 indexed winner);
+	event WinnerChosen(uint256 epoch, uint256 indexed winner);
 
 	event NftBattleArenaSet(address nftBattleArena);
 
@@ -50,7 +53,7 @@ contract Jackpot is ERC721
 		zooFunctions = IZooFunctions(_functions);
 	}
 
-	function setNftBattleArena(address _nftBattleArena) external
+	function setNftBattleArena(address payable _nftBattleArena) external
 	{
 		require(address(arena) == address(0));
 
@@ -59,16 +62,19 @@ contract Jackpot is ERC721
 		emit NftBattleArenaSet(_nftBattleArena);
 	}
 
+	/// @notice Function to choose jackpot winner in selected epoch.
 	function chooseWinner(uint256 epoch) external
 	{
 		require(epoch < arena.currentEpoch(), "only played epochs");
-		require(winners[epoch] == 0, "winner has not choosen");
-		uint256 random = zooFunctions.getRandomResultByEpoch(epoch) % map.size();
-		winners[epoch] = map.get(map.getKeyAtIndex(random));
+		require(winners[epoch] == 0, "winner has been chosen");
+		uint256 random = zooFunctions.getRandomResultByEpoch(epoch);
+		require(random != 0, "requestRandom has not been called");
+		winners[epoch] = map.get(map.getKeyAtIndex(random % map.size()));
 
-		emit WinnerChoosed(epoch, winners[epoch]);
+		emit WinnerChosen(epoch, winners[epoch]);
 	}
 
+	/// @notice Function to stake Nft position to take part in jackpot.
 	function stake(uint256 id, address beneficiary) external returns (uint256)
 	{
 		require(tokenOfOwner[msg.sender] == 0, "Caller must have only one jackpot position");
@@ -83,6 +89,7 @@ contract Jackpot is ERC721
 		return positionIndex++;
 	}
 
+	/// @notice Function to unstake Nft position.
 	function unstake(uint256 id, address beneficiary) external
 	{
 		require(ownerOf(id) == msg.sender);
@@ -96,6 +103,7 @@ contract Jackpot is ERC721
 		emit Unstaked(id, msg.sender, beneficiary, zooPositionId);
 	}
 
+	/// @notice Function to check if selected position have reward or not in selected epoch. 
 	function checkReward(uint256 id, uint256 epoch) public view returns (uint256 yvTokensReward)
 	{
 		if (winners[epoch] == id && !claimedBy[epoch][id])
@@ -106,13 +114,16 @@ contract Jackpot is ERC721
 			return 0;
 	}
 
+	/// @notice Function to claim reward from jackpot.
 	function claimReward(uint256 id, uint256 epoch, address beneficiary) external returns (uint256 rewards)
 	{
 		require(ownerOf(id) == msg.sender);
 
 		uint256 redeemAmount = checkReward(id, epoch);
 		claimedBy[epoch][id] = true;
-		rewards = vault.redeemUnderlying(redeemAmount, beneficiary);
+		vault.redeem(redeemAmount);
+		rewards = IERC20(arena.dai()).balanceOf(address(this));
+		IERC20(arena.dai()).transfer(beneficiary, rewards);
 
 		emit Claimed(id, epoch, msg.sender, beneficiary, rewards);
 	}

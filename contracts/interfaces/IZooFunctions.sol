@@ -42,4 +42,6 @@ interface IZooFunctions {
 	function fourthStageDuration() external view returns (uint256);
 
 	function fifthStageDuration() external view returns (uint256);
+
+	function getStageDurations() external view returns (uint256, uint256, uint256, uint256, uint256, uint256 epochDuration);
 }

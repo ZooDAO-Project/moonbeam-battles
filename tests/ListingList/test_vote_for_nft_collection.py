@@ -65,3 +65,5 @@ def test_multi_vote_in_one_epoch(accounts, listing):
 	assert record_for_total2["decayRate"] > record_for_total1["decayRate"]
 	assert record_for_collection_at_expiration2["rateOfIncrease"] > record_for_collection_at_expiration1["rateOfIncrease"]
 	assert record_for_total_at_expiration2["rateOfIncrease"] > record_for_total_at_expiration1["rateOfIncrease"]
+	assert record_for_collection2["rateOfIncrease"] <= record_for_collection2["decayRate"]
+	assert record_for_total2["rateOfIncrease"] <= record_for_total2["decayRate"]

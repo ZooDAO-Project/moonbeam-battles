@@ -11,13 +11,16 @@ contract ControllerMock
 	{
 		well = ERC20(_well);
 	}
-    
-    function claimReward(uint8 rewardType, address payable holder) public returns(uint256)
-    { // rewardType = 0 for WELL, mToken = address for frax
-        require(rewardType == 0, "Incorrect reward type");
 
-        well.transfer(holder, 10 ** 20);
+	receive() external payable {}
 
-        return 10 ** 20;
-    }
+	function claimReward(uint8 rewardType, address payable holder) public
+	{ // rewardType = 0 for WELL, mToken = address for frax
+		require(rewardType <= 1, "Incorrect reward type");
+		if (rewardType == 0) {
+			well.transfer(holder, 10 ** 20);
+		} else {
+			holder.transfer(address(this).balance / 2);
+		}
+	}
 }

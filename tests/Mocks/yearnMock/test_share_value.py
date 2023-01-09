@@ -2,8 +2,49 @@ import brownie
 from brownie import chain
 
 
-def _from(account):
-	return {"from": account}
+def test_init(vault, tokens, accounts):
+	(zooToken, daiToken, linkToken, nft) = tokens
+	defaultExchangeRate = 209460678715639526810127788
+
+	assert vault.exchangeRateCurrent.call() == defaultExchangeRate # current exchange rate
+	assert vault._shareValue.call(1e8) == 20946067871563952
+	assert vault._sharesForValue.call(1e18) == 4774165758
+
+def test_after_first_mint(vault, tokens, accounts):
+	(zooToken, daiToken, linkToken, nft) = tokens
+	defaultExchangeRate = 209460678715639526810127788
+
+	#daiToken.transfer(vault, 1e21)
+
+	daiToken.approve(vault, 2**256 - 1)
+	tx = vault.mint(1e18)
+
+	assert vault.exchangeRateCurrent.call() != defaultExchangeRate
+	assert vault.exchangeRateCurrent.call() == 209460678721578648631411846
+	assert vault._shareValue.call(1e8) == 20946067872157864
+	assert vault._sharesForValue.call(1e18) == 4774165758
+
+def test_after_increase_balance(vault, tokens, accounts):
+	(zooToken, daiToken, linkToken, nft) = tokens
+	defaultExchangeRate = 209460678715639526810127788
+
+	#daiToken.transfer(vault, 1e21)
+
+	daiToken.approve(vault, 2**256 - 1)
+	tx = vault.mint(1e18)
+
+	daiToken.transfer(vault, 1e21) # transfer isn't changing rate or share value
+
+	assert vault.exchangeRateCurrent.call() != defaultExchangeRate
+	assert vault.exchangeRateCurrent.call() == 209460678721578648631411846
+	assert vault._shareValue.call(1e8) == 20946067872157864
+	assert vault._sharesForValue.call(1e18) == 4774165758
+
+	vault.increaseMockBalance()
+
+	assert vault.exchangeRateCurrent.call() // 209460678721578648631411846 > 0
+	assert vault._shareValue.call(1e8) // 20946067872157864 > 0
+	assert vault._sharesForValue.call(1e18) // 4774165758 == 0
 
 # copied from test_shares_to_tokens.py
 # def test_return_shares_according_to_vault(accounts, fifth_stage):

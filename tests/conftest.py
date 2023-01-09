@@ -16,11 +16,21 @@ def isolate(fn_isolation):
 @pytest.fixture(scope="module")
 def listingListForUnitTest(accounts, tokens, ListingList):
 	zooToken = tokens[0]
-	day = 60 * 60 * 24
-	duration = 14 * day
-	min_timelock = 7 * day
-	max_timelock = 365 * day 
-	incentive_rewards_duration = day * 365 * 4
+	min_timelock = 1814400
+	duration = min_timelock
+	max_timelock = 7257600
+	incentive_rewards_duration = max_timelock
+	listingList = ListingList.deploy(zooToken, duration, min_timelock, max_timelock, incentive_rewards_duration, {"from": accounts[0]})
+
+	return (listingList, zooToken)
+
+@pytest.fixture(scope="module")
+def listingListForUnitTest_test_values(accounts, tokens, ListingList):
+	zooToken = tokens[0]
+	min_timelock = 3000
+	duration = min_timelock
+	max_timelock = 86400
+	incentive_rewards_duration = 86400
 	listingList = ListingList.deploy(zooToken, duration, min_timelock, max_timelock, incentive_rewards_duration, {"from": accounts[0]})
 
 	return (listingList, zooToken)
@@ -74,21 +84,25 @@ def well(accounts, ERC20PresetMinterPauser):
 	return token
 
 @pytest.fixture(scope="module")
+def wGlmr(accounts, WETH9):
+	return WETH9.deploy({"from": accounts[0]})
+
+@pytest.fixture(scope="module")
 def token_controller(accounts, well, ControllerMock):
 	controller = ControllerMock.deploy(well.address, {"from": accounts[0]})
 	well.transfer(controller.address, 4e25)
+	accounts[0].transfer(controller.address, 50 * 1e18)
 	return controller
 
 @pytest.fixture(scope="module")
 def listing(accounts, tokens, ListingList):
 	zooToken = tokens[0]
-	minute = 60
-	hour = 3600
-	duration = 50 * minute
-	min_timelock = 5 * minute
+
+	min_timelock = 1814400
+	duration = min_timelock
 	# max_timelock = 120 * minute
-	max_timelock = 48 * hour
-	incentive_rewards_duration = 3 * 7 * 24 * 60 * 60 # 3 weeks
+	max_timelock = 7257600
+	incentive_rewards_duration = max_timelock
 	listingList = ListingList.deploy(zooToken, duration, min_timelock, max_timelock, incentive_rewards_duration, {"from": accounts[0]})
 
 	return (listingList, zooToken)
@@ -140,7 +154,7 @@ def jackpotB(Jackpot, voting, vault, iterable_mapping_library, base_zoo_function
 	return Jackpot.deploy(voting.address, vault.address, base_zoo_functions, "Jackpot B", "JKPTB", {"from": accounts[0]})
 
 @pytest.fixture(scope="module")
-def battles(accounts, tokens, vault, listing, xZoo, staking, voting, jackpotA, jackpotB, base_zoo_functions, token_controller, well, ZooGovernance, NftBattleArena):
+def battles(accounts, tokens, vault, listing, xZoo, staking, voting, jackpotA, jackpotB, base_zoo_functions, token_controller, well, wGlmr, ZooGovernance, NftBattleArena):
 	(zooToken, daiToken, linkToken, nft) = tokens
 	listingList = listing[0]
  
@@ -155,7 +169,7 @@ def battles(accounts, tokens, vault, listing, xZoo, staking, voting, jackpotA, j
 		vault.address,
 		governance.address,
 		accounts[0],
-		accounts[0],
+		#accounts[0],
 		accounts[0],
 		staking.address,
 		voting.address,
@@ -164,14 +178,14 @@ def battles(accounts, tokens, vault, listing, xZoo, staking, voting, jackpotA, j
 		well.address,
 		{"from": accounts[0]})
 
-	arena.init(xZoo.address, jackpotA.address, jackpotB.address)
+	arena.init(xZoo.address, jackpotA.address, jackpotB.address, wGlmr.address)
 
 	xZoo.setNftBattleArena(arena.address)
 	jackpotA.setNftBattleArena(arena.address)
 	jackpotB.setNftBattleArena(arena.address)
 	staking.setNftBattleArena(arena.address, {"from": accounts[0]})
 	voting.setNftBattleArena(arena.address, {"from": accounts[0]})
-	base_zoo_functions.init(arena.address, listingList.address, accounts[0], {"from": accounts[0]})                      # connect functions with battleStaker
+	base_zoo_functions.init(arena.address, accounts[0], {"from": accounts[0]})                      # connect functions with battleStaker
 	# vault.transferOwnership(arena.address, {"from": accounts[0]})                           # only arena can deposit and withdraw directly.
 
 	royalty_receiver = accounts[9]
@@ -261,8 +275,14 @@ def third_stage(accounts, second_stage):
 		for j in range(3):
 			staking_position = 1 + j + i * 3
 			voting.createNewVotingPosition(staking_position, 1e20, _from(accounts[i]))
-		
-	chain.sleep(arena.secondStageDuration())
+
+	secondStage = arena.secondStageDuration()
+	secondStagePart = secondStage // 10
+	chain.sleep(secondStagePart * 8)
+
+	voting.createNewVotingPosition(9, 1e20, _from(accounts[1])) # position with lower than 1.3 votes rate.
+
+	chain.sleep(secondStagePart * 2)
 	
 	# mine new block to move to next stage
 	chain.mine(1)

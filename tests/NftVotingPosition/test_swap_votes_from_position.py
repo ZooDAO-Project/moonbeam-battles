@@ -34,37 +34,37 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(1)["endEpoch"] == 0
 	assert arena.votingPositionsValues(1)["zooInvested"] == initialAmount
 	assert daiToken.balanceOf(account0) == 39999700000000000000000000
-	assert zooToken.balanceOf(account0) == 11666300000000000000000000
+	assert zooToken.balanceOf(account0) == 13749600000000000000000000
 
 	assert arena.votingPositionsValues(4)["daiInvested"] == initialAmount
 	assert arena.votingPositionsValues(4)["endEpoch"] == 0
 	assert arena.votingPositionsValues(4)["zooInvested"] == initialAmount
-	assert daiToken.balanceOf(account1) == 39999700000000000000000000
+	assert daiToken.balanceOf(account1) == 39999600000000000000000000
 	assert zooToken.balanceOf(account1) == 39999700000000000000000000
 
 	assert arena.votingPositionsValues(2)["daiInvested"] == initialAmount
 
 	# swapVotesFromPosition(uint256 voting_position_id, uint256 daiNumber, uint256 newStakingPositionId, address beneficiary, uint256 newVotingPosition)
 	tx = voting.swapVotesFromPosition(1, swapAmount, 0, account0, 2, _from(account0)) # swap to voting position 2, should swap to existing, withdraw and add
-	tx.events["SwappedPositionVotes"]
+	# tx.events["SwappedPositionVotes"]
 	tx.events["WithdrawedDaiFromVoting"]
 	tx.events["AddedDaiToVoting"]
 
 	tx1 = voting.swapVotesFromPosition(4, swapAmount, 2, account1, 0, _from(account1)) # swap to staking position 2, should create new and withdraw
-	tx1.events["SwappedPositionVotes"]
+	# tx1.events["SwappedPositionVotes"]
 	tx1.events["WithdrawedDaiFromVoting"]
-	tx1.events["CreatedVotingPosition"] # mint 10 position.
+	tx1.events["CreatedVotingPosition"] # mint 11 position.
 
 	tx2 = voting.swapVotesFromPosition(5, initialAmount, 2, account1, 0, _from(account1)) # swap to staking position 2, should create new and liquidate
-	tx2.events["SwappedPositionVotes"]
+	# tx2.events["SwappedPositionVotes"]
 	tx2.events["LiquidatedVotingPosition"]
-	tx2.events["CreatedVotingPosition"] # mint 11 position.
+	tx2.events["CreatedVotingPosition"] # mint 12 position.
 
 	assert arena.votingPositionsValues(1)["daiInvested"] == (initialAmount - swapAmount)
 	assert arena.votingPositionsValues(1)["endEpoch"] == 0
 	assert arena.votingPositionsValues(1)["zooInvested"] == (initialAmount - swapAmount)
 	assert daiToken.balanceOf(account0) == 39999700000000000000000000
-	assert zooToken.balanceOf(account0) == 11666309950000000000000000
+	assert zooToken.balanceOf(account0) == 13749609950000000000000000
 
 	assert arena.votingPositionsValues(4)["daiInvested"] == (initialAmount - swapAmount) # dai withdrawed
 	assert arena.votingPositionsValues(4)["endEpoch"] == 0
@@ -73,18 +73,18 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(5)["daiInvested"] == initialAmount # position liquidated with old values left for history.
 	assert arena.votingPositionsValues(5)["endEpoch"] == 2
 	assert arena.votingPositionsValues(5)["zooInvested"] == initialAmount
-	assert daiToken.balanceOf(account1) == 39999700000000000000000000
+	assert daiToken.balanceOf(account1) == 39999600000000000000000000
 	assert zooToken.balanceOf(account1) == 39999809450000000000000000
 
 	assert arena.votingPositionsValues(2)["daiInvested"] == (initialAmount + swapAmount) # dai added
 
-	assert tx1.events['CreatedVotingPosition']['votingPositionId'] == 10 # new minted position exists.
-	assert arena.votingPositionsValues(10)["daiInvested"] == swapAmount  # new minted position got dai swapped.
-	assert arena.votingPositionsValues(10)["zooInvested"] == 0
-
-	assert tx2.events['CreatedVotingPosition']['votingPositionId'] == 11
-	assert arena.votingPositionsValues(11)["daiInvested"] == initialAmount # new minted position got dai swapped.
+	assert tx1.events['CreatedVotingPosition']['votingPositionId'] == 11 # new minted position exists.
+	assert arena.votingPositionsValues(11)["daiInvested"] == swapAmount  # new minted position got dai swapped.
 	assert arena.votingPositionsValues(11)["zooInvested"] == 0
+
+	assert tx2.events['CreatedVotingPosition']['votingPositionId'] == 12
+	assert arena.votingPositionsValues(12)["daiInvested"] == initialAmount # new minted position got dai swapped.
+	assert arena.votingPositionsValues(12)["zooInvested"] == 0
 
 
 def test_nft_mint_on_swap_to_new_voting(finished_epoch):

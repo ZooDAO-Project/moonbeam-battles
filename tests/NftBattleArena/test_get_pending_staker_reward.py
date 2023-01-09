@@ -14,16 +14,13 @@ def _from(account):
 
 def stake_nft(staking, account, nft, tokenId):
 	nft.approve(staking.address, tokenId, _from(account))
-	
-	return staking.stakeNft(nft.address, tokenId, _from(account))
 
+	return staking.stakeNft(nft.address, tokenId, _from(account))
 
 
 def test_null_reward_if_no_votes(accounts, battles, tokens):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
-
-	
 
 	stake_nft(staking, accounts[1], nft, 4)
 	stake_nft(staking, accounts[1], nft, 5)
@@ -45,8 +42,6 @@ def test_null_reward_if_no_votes(accounts, battles, tokens):
 def test_reward_calculation_after_votes(accounts, battles, tokens):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
-
-	
 
 	stake_nft(staking, accounts[1], nft, 4)
 	stake_nft(staking, accounts[1], nft, 5)
@@ -85,9 +80,9 @@ def test_reward_calculation_after_choosing_winner(accounts, fifth_stage):
 
 	reward1 = arena.rewardsForEpoch(fighter1, current_epoch)
 	reward2 = arena.rewardsForEpoch(fighter2, current_epoch)
-	
-	assert reward1['yTokens'] == 100e18
-	assert reward2['yTokens'] == 100e18
+
+	assert abs(arena.sharesToTokens.call(reward1['yTokens']) - 100e18) < 10
+	assert abs(arena.sharesToTokens.call(reward2['yTokens']) - 100e18) < 10
 
 
 	arena.requestRandom()
@@ -106,7 +101,7 @@ def test_reward_calculation_after_choosing_winner(accounts, fifth_stage):
 
 	# Winner rewards
 	reward = arena.rewardsForEpoch(winner, current_epoch)
-	assert reward["yTokensSaldo"] == 17727272727272727275
+	assert reward["yTokensSaldo"] == 9217448745
 
 	reward = arena.rewardsForEpoch(winner, next_epoch)
 	assert reward["yTokensSaldo"] == 0
@@ -115,11 +110,11 @@ def test_reward_calculation_after_choosing_winner(accounts, fifth_stage):
 	print(staking['lastRewardedEpoch'])
 
 	(reward, end) = arena.getPendingStakerReward(winner)
-	assert reward == 454545454545454545
+	assert reward == 236344839
 
 	# Loser rewards
 	reward = arena.rewardsForEpoch(loser, current_epoch)
-	assert reward["yTokensSaldo"] == -9090909090909090910
+	assert reward["yTokensSaldo"] == -4726896791
 
 	reward = arena.rewardsForEpoch(loser, next_epoch)
 	assert reward["yTokensSaldo"] == 0
@@ -127,13 +122,13 @@ def test_reward_calculation_after_choosing_winner(accounts, fifth_stage):
 	(reward, end) = arena.getPendingStakerReward(loser)
 	assert reward == 0
 
-	
+
 
 # def test_token_income_calculation(accounts, battles, tokens):
 #     (vault, functions, governance, staking, voting, arena, listing) = battles
 #     (zooToken, daiToken, linkToken, nft) = tokens
 
-#     
+#
 
 #     stake_nft(staking, accounts[1], nft, 4)
 #     stake_nft(staking, accounts[1], nft, 5)

@@ -13,10 +13,11 @@ def test_unlock(accounts, listingListForUnitTest):
 	chain.time()
 
 	value = 1e21
+	maxTimeLock = listingList.maxTimelock()
 	zoo_token.approve(listingList, value)
-	listingList.voteForNftCollection(collection, value, 100 * day)
+	listingList.voteForNftCollection(collection, value, maxTimeLock)
 
-	chain.sleep(100 * day)
+	chain.sleep(maxTimeLock)
 	listingList.unlockZoo(1)
 
 	assert balance == zoo_token.balanceOf(accounts[0])

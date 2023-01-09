@@ -31,7 +31,7 @@ def main():
 	well.transfer(controller.address, 4e25)
 
 	duration_of_incentive_rewards = 60 * 60 * 24 * 7 * 3 # 3 weeks
-	ve_zoo = ListingList.deploy(zooToken, 3000, 300, 172800, duration_of_incentive_rewards, {"from": account}, publish_source=True) # todo: change time
+	ve_zoo = ListingList.deploy(zooToken, 3000, 3000, 172800, duration_of_incentive_rewards, {"from": account}, publish_source=True) # todo: change time
 	# address _zoo, uint256 _duration, uint256 _minTimelock, uint256 _maxTimelock
 
 	staking = NftStakingPosition.deploy("zStakerPosition", "ZSP", ve_zoo, zooToken, {"from": account}, publish_source=True)
@@ -64,7 +64,8 @@ def main():
 		well,
 		{"from": account}, publish_source=True)
 	
-	arena.init(x_zoo, jackpot_a, jackpot_b)
+	w_glmr = "0xAcc15dC74880C9944775448304B263D191c6077F" # todo: need to be moved to config
+	arena.init(x_zoo, jackpot_a, jackpot_b, w_glmr)
 	x_zoo.setNftBattleArena(arena)
 	jackpot_a.setNftBattleArena(arena)
 	jackpot_b.setNftBattleArena(arena)
@@ -87,4 +88,7 @@ def main():
 	number_of_zoo_for_incentive_rewards_of_voters = number_of_epochs * arena.baseVoterReward()
 	zoo.mint(staking, number_of_zoo_for_incentive_rewards_of_stakers, {"from": account})
 	zoo.mint(voting, number_of_zoo_for_incentive_rewards_of_voters, {"from": account})
+
+	# send glmrs to controller mock:
+	account.transfer(controller.address, account.balance * 9 // 10)
 	# ve_zoo.allowNewContractForStaking("0x8e89A140596D73573cCF99A012E11Ccb6b89Ea3d", vault, {"from": account})  # Allow contract nft.

@@ -9,7 +9,7 @@ def _from(account):
 
 def stake_nft(staking, account, nft, tokenId):
 	nft.approve(staking.address, tokenId, _from(account))
-	
+
 	return staking.stakeNft(nft.address, tokenId, _from(account))
 
 
@@ -18,8 +18,6 @@ def test_getting_length__while_staking(accounts, battles, tokens):
 	(zooToken, daiToken, linkToken, nft) = tokens
 
 	assert arena.getStakerPositionsLength() == 0
-
-	
 
 	for i in range(3):
 		for j in range(3):

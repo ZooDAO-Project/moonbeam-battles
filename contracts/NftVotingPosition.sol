@@ -13,6 +13,8 @@ contract NftVotingPosition is ERC721, Ownable
 {
 	event NftBattleArenaSet(address nftBattleArena);
 
+	event ClaimedIncentiveRewardFromVoting(address indexed voter, address beneficiary, uint256 zooReward, uint256 votingPositionId);
+
 	NftBattleArena public nftBattleArena;
 	IERC20 public dai;
 	IERC20 public zoo;
@@ -29,7 +31,7 @@ contract NftVotingPosition is ERC721, Ownable
 		_;
 	}
 
-	function setNftBattleArena(address _nftBattleArena) external onlyOwner
+	function setNftBattleArena(address payable _nftBattleArena) external onlyOwner
 	{
 		require(address(nftBattleArena) == address(0));
 
@@ -41,21 +43,23 @@ contract NftVotingPosition is ERC721, Ownable
 	function createNewVotingPosition(uint256 stakingPositionId, uint256 amount) external
 	{
 		require(amount != 0, "zero vote not allowed");                                        // Requires for vote amount to be more than zero.
+		require(nftBattleArena.getCurrentStage() == Stage.SecondStage, "Wrong stage!");
 		dai.transferFrom(msg.sender, address(nftBattleArena), amount);                        // Transfers DAI to arena contract for vote.
 		(,uint256 votingPositionId) = nftBattleArena.createVotingPosition(stakingPositionId, msg.sender, amount);
 		_safeMint(msg.sender, votingPositionId);
 	}
 
-	function addDaiToPosition(uint256 votingPositionId, uint256 amount) external onlyVotingOwner(votingPositionId) returns (uint256 votes)
+	function addDaiToPosition(uint256 votingPositionId, uint256 amount) external returns (uint256 votes)
 	{
 		dai.transferFrom(msg.sender, address(nftBattleArena), amount);                        // Transfers DAI to arena contract for vote.
-		nftBattleArena.addDaiToVoting(votingPositionId, msg.sender, amount, 0);               // zero for yTokens coz its not swap.
+		return nftBattleArena.addDaiToVoting(votingPositionId, msg.sender, amount, 0);               // zero for yTokens coz its not swap.
 	}
 
-	function addZooToPosition(uint256 votingPositionId, uint256 amount) external onlyVotingOwner(votingPositionId) returns (uint256 votes) 
+	function addZooToPosition(uint256 votingPositionId, uint256 amount) external returns (uint256 votes) 
 	{
+		require(nftBattleArena.getCurrentStage() == Stage.FourthStage, "Wrong stage!");
 		zoo.transferFrom(msg.sender, address(nftBattleArena), amount);                        // Transfers ZOO to arena contract for vote.
-		nftBattleArena.addZooToVoting(votingPositionId, msg.sender, amount);
+		return nftBattleArena.addZooToVoting(votingPositionId, msg.sender, amount);
 	}
 
 	function withdrawDaiFromVotingPosition(uint256 votingPositionId, address beneficiary, uint256 daiNumber) external onlyVotingOwner(votingPositionId)
@@ -81,18 +85,38 @@ contract NftVotingPosition is ERC721, Ownable
 	/// @param newVotingPosition - id of voting position moving to, if exist. If there are no such, should be zero.
 	function swapVotesFromPosition(uint256 votingPositionId, uint256 daiNumber, uint256 newStakingPositionId, address beneficiary, uint256 newVotingPosition) external onlyVotingOwner(votingPositionId)
 	{
-		require(daiNumber != 0, "zero vote not allowed");                                        // Requires for vote amount to be more than zero.
+		require(daiNumber != 0, "zero vote not allowed");                                                      // Requires for vote amount to be more than zero.
 		require(newVotingPosition == 0 || ownerOf(newVotingPosition) == msg.sender, "Not the owner of voting");
+		require(nftBattleArena.getCurrentStage() == Stage.FirstStage, "Wrong stage!");                         // Requires correct stage.
 
-		uint256 newVotingPosition1 = nftBattleArena.swapPositionVotes(votingPositionId, msg.sender, beneficiary, daiNumber, newStakingPositionId, newVotingPosition);
+		(uint256 stakingPositionId, uint256 daiInvested,,,,,,,,,,) =  nftBattleArena.votingPositionsValues(votingPositionId);    // Gets id of staker position.
 
-		if (newVotingPosition == 0)
+		if (daiNumber > daiInvested)                                                            // If swap amount more than invested.
 		{
-			_safeMint(msg.sender, newVotingPosition1);
+			daiNumber = daiInvested;                                                            // Set swap amount to maximum, same as in withdrawDai.
+		}
+
+		nftBattleArena.updateInfo(stakingPositionId);
+
+		uint256 yTokens = nftBattleArena.tokensToShares(daiNumber);
+
+		nftBattleArena.withdrawDaiFromVoting(votingPositionId, msg.sender, beneficiary, daiNumber, true);      // Calls internal withdrawDai.
+
+		if (newVotingPosition == 0)                   // If zero, i.e. new position doesn't exist.
+		{
+			(, newVotingPosition) = nftBattleArena._createVotingPosition(newStakingPositionId, msg.sender, yTokens, daiNumber); // Creates new position to swap there.
+			_safeMint(msg.sender, newVotingPosition);
+		}
+		else                                          // If position existing, swap to it.
+		{
+			(,,,,,,,uint256 endEpoch,,,,) = nftBattleArena.votingPositionsValues(newVotingPosition);
+			require(endEpoch == 0, "unstaked");       // Requires for position to exist and still be staked.
+
+			nftBattleArena.addDaiToVoting(newVotingPosition, msg.sender, daiNumber, yTokens);                // swap votes to existing position.
 		}
 	}
 
-	/// Claims rewards from multiple voting positions
+	/// @notice Claims rewards from multiple voting positions
 	/// @param votingPositionIds array of voting positions indexes
 	/// @param beneficiary address to transfer reward to
 	function batchClaimRewardsFromVotings(uint256[] calldata votingPositionIds, address beneficiary) external returns (uint256 reward)
@@ -128,7 +152,7 @@ contract NftVotingPosition is ERC721, Ownable
 	/// @notice Function to claim incentive reward for voting, proportionally of collection weight in ve-Model pool.
 	function claimIncentiveVoterReward(uint256 votingPositionId, address beneficiary) external returns (uint256)
 	{
-		require(ownerOf(votingPositionId) == msg.sender, "Not the owner!");             // Requires to be owner of position.
+		require(ownerOf(votingPositionId) == msg.sender, "Not the owner!");                     // Requires to be owner of position.
 
 		uint256 reward = nftBattleArena.calculateIncentiveRewardForVoter(votingPositionId);
 
@@ -143,7 +167,10 @@ contract NftVotingPosition is ERC721, Ownable
 		{
 			require(ownerOf(votingPositionIds[i]) == msg.sender, "Not the owner!");             // Requires to be owner of position.
 
-			reward += nftBattleArena.calculateIncentiveRewardForVoter(votingPositionIds[i]);
+			uint256 claimed = nftBattleArena.calculateIncentiveRewardForVoter(votingPositionIds[i]);
+			reward += claimed;
+
+			emit ClaimedIncentiveRewardFromVoting(msg.sender, beneficiary, reward, votingPositionIds[i]);
 		}
 		zoo.transfer(beneficiary, reward);
 	}

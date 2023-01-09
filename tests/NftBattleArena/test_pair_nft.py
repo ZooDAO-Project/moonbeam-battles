@@ -17,12 +17,12 @@ def test_stage_requirement(accounts, second_stage):
 	voting.createNewVotingPosition(1, 10e18)
 	voting.createNewVotingPosition(2, 10e18)
 
-	chain.sleep(arena.thirdStageDuration())
+	chain.sleep(arena.secondStageDuration())
 
 	tx = arena.pairNft(1)
 	assert tx.status == 1
 
-	chain.sleep(arena.fourthStageDuration())
+	chain.sleep(arena.thirdStageDuration())
 
 	with brownie.reverts("Wrong stage!"):
 		arena.pairNft(1)
@@ -98,13 +98,13 @@ def test_recording_rewards(accounts, third_stage):
 	print(reward1)
 	print(reward2)
 
-	tokensAtBattleStart1 = arena.sharesToTokens(reward1["yTokens"])
-	tokensAtBattleStart2 = arena.sharesToTokens(reward2["yTokens"])
+	tokensAtBattleStart1 = arena.sharesToTokens.call(reward1["yTokens"])
+	tokensAtBattleStart2 = arena.sharesToTokens.call(reward2["yTokens"])
 
 	assert reward1["tokensAtBattleStart"] == tokensAtBattleStart1
 	assert reward2["tokensAtBattleStart"] == tokensAtBattleStart2
 
-	pps = vault.exchangeRateStored()
+	pps = vault.exchangeRateCurrent.call()
 	assert reward1["pricePerShareAtBattleStart"] == pps
 	assert reward1["pricePerShareAtBattleStart"] == pps
 

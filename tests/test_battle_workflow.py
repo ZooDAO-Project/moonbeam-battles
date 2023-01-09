@@ -299,7 +299,7 @@ def test_battles_workflow_complex_multi_pairing(accounts, tokens, battles):
 	assert arena.getCurrentStage() == 0
 
 	shares = 19696969696969696981 # tokensToShares and sharesForValue generate both that number from 20e18 dai
-	pps = vault.exchangeRateStored()
+	pps = vault.exchangeRateCurrent.call()
 	print("______________________")
 	print("pricePerShare.", pps)
 	print("totalSupply...", vault.totalSupply())

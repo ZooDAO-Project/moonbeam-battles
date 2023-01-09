@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 
 import "./interfaces/IZooFunctions.sol";
 import "./NftBattleArena.sol";
-import "./ListingList.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 
@@ -13,8 +12,6 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 contract BaseZooFunctions is Ownable, VRFConsumerBase
 {
 	NftBattleArena public battles;
-
-	ListingList public list; // todo: maybe change for listing list
 
 	constructor (address _vrfCoordinator, address _link) VRFConsumerBase(_vrfCoordinator, _link) 
 	{
@@ -25,26 +22,23 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 	mapping (uint256 => uint256) public randomNumberByEpoch;
 
 	uint256 internal chainLinkFee;
-	uint256 public epochNumber = 1;
 	bytes32 internal keyHash;
 
 	bool public isRandomFulfilled;
 	bool public isRandomRequested;
 	uint256 internal randomResult;  // Random number for battles.
 
-	uint256 public firstStageDuration = 10 minutes;// hours;        //todo:change time //3 days;    // Duration of first stage(stake).
-	uint256 public secondStageDuration = 10 minutes;// hours;       //todo:change time //7 days;    // Duration of second stage(DAI).
-	uint256 public thirdStageDuration = 10 minutes;// hours;        //todo:change time //2 days;    // Duration of third stage(Pair).
-	uint256 public fourthStageDuration = 10 minutes;// hours;       //todo:change time //5 days;    // Duration fourth stage(ZOO).
-	uint256 public fifthStageDuration = 10 minutes;// hours;        //todo:change time //2 days;    // Duration of fifth stage(Winner).
+	uint256 public firstStageDuration = 2 days;    // Duration of first stage(stake).
+	uint256 public secondStageDuration = 5 days;    // Duration of second stage(DAI).
+	uint256 public thirdStageDuration = 1 days;    // Duration of third stage(Pair).
+	uint256 public fourthStageDuration = 12 days;    // Duration fourth stage(ZOO).
+	uint256 public fifthStageDuration = 1 days;    // Duration of fifth stage(Winner).
 	
 	/// @notice Function for setting address of _nftBattleArena contract.
 	/// @param _nftBattleArena - address of _nftBattleArena contract.
 	/// @param owner - address of contract owner, should be aragon dao.
-	function init(address _nftBattleArena, address listingList, address owner) external onlyOwner {
+	function init(address payable _nftBattleArena, address owner) external onlyOwner {
 		battles = NftBattleArena(_nftBattleArena);
-
-		list = ListingList(listingList);
 
 		transferOwnership(owner);                       // transfer ownership to dao.
 	}
@@ -55,6 +49,12 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 		randomResult = 0;
 		isRandomRequested = false;
 		isRandomFulfilled = false;
+	}
+
+	function getStageDurations() external view returns (uint256, uint256, uint256, uint256, uint256, uint256 epochDuration)
+	{
+		epochDuration = firstStageDuration + secondStageDuration + thirdStageDuration + fourthStageDuration + fifthStageDuration;
+		return (firstStageDuration, secondStageDuration, thirdStageDuration, fourthStageDuration, fifthStageDuration, epochDuration);
 	}
 
 	function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override 
@@ -70,7 +70,7 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 		require(battles.getCurrentStage() == Stage.FifthStage, "Random wasn't reset");
 
 		randomResult = _computePseudoRandom();
-		randomNumberByEpoch[epochNumber++] = randomResult;
+		randomNumberByEpoch[battles.currentEpoch()] = randomResult;
 		isRandomFulfilled = true;
 		isRandomRequested = true;
 	}
@@ -113,15 +113,13 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 	/// @return votes - final amount of votes after calculating.
 	function computeVotesByDai(uint256 amount) external view returns (uint256 votes)
 	{
-		uint256 epochIndex = list.getEpochNumber(block.timestamp);
-
 		if (block.timestamp < battles.epochStartDate() + battles.firstStageDuration() + battles.secondStageDuration() / 3)
 		{
 			votes = amount * 13 / 10;                                          // 1.3 multiplier for votes.
 		}
 		else if (block.timestamp < battles.epochStartDate() + battles.firstStageDuration() + ((battles.secondStageDuration() * 2) / 3))
 		{
-			votes = amount;                                                          // 1.0 multiplier for votes.
+			votes = amount;                                                    // 1.0 multiplier for votes.
 		}
 		else
 		{
@@ -140,7 +138,7 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 		}
 		else if (block.timestamp < battles.epochStartDate() + battles.firstStageDuration() + battles.secondStageDuration() + battles.thirdStageDuration() + (battles.fourthStageDuration() * 2) / 3)
 		{
-			votes = amount;                                                         // 1.0 multiplier for votes.
+			votes = amount;                                                   // 1.0 multiplier for votes.
 		}
 		else
 		{
@@ -149,7 +147,7 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 	}
 
 	function setStageDuration(Stage stage, uint256 duration) external onlyOwner {
-		// require(duration >= 2 days && 10 days >= duration, "incorrect duration"); // turned off for testnet.
+		// require(duration >= 2 days && 10 days >= duration, "incorrect duration");
 
 		if (stage == Stage.FirstStage) {
 			firstStageDuration = duration;

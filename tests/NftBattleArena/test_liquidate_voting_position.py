@@ -2,7 +2,7 @@ import brownie
 from brownie import chain
 
 def _from(account):
-    return {"from": account}
+	return {"from": account}
 
 
 # def test_liquidate_voting_position():

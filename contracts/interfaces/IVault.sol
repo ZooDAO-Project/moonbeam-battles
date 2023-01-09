@@ -6,11 +6,13 @@ pragma experimental ABIEncoderV2;
 interface VaultAPI {
 	function mint(uint256 mintAmount) external returns (uint256);
 
-	function redeemUnderlying(uint256 redeemAmount, address recipient) external returns (uint256);
+	function redeem(uint redeemTokens) external returns (uint256);
 
-	function exchangeRateStored() external view returns (uint);
+	function exchangeRateCurrent() external returns (uint256);
 
 	function transfer(address who, uint256 amount) external returns (bool);
 
 	function increaseMockBalance() external;
+
+	function balanceOf(address who) external view returns (uint256);
 }

@@ -20,6 +20,8 @@ contract NftStakingPosition is ERC721, Ownable
 
 	event NftBattleArenaSet(address nftBattleArena);
 
+	event ClaimedIncentiveRewardFromVoting(address indexed staker, address beneficiary, uint256 zooReward, uint256 stakingPositionId);
+
 	// Records NFT contracts available for staking.
 	NftBattleArena public nftBattleArena;
 	ListingList public listingList;
@@ -33,7 +35,7 @@ contract NftStakingPosition is ERC721, Ownable
 		zoo = IERC20(_zoo);
 	}
 
-	function setNftBattleArena(address _nftBattleArena) external onlyOwner
+	function setNftBattleArena(address payable _nftBattleArena) external onlyOwner
 	{
 		require(address(nftBattleArena) == address(0));
 
@@ -45,6 +47,7 @@ contract NftStakingPosition is ERC721, Ownable
 	function stakeNft(address token, uint256 id) external
 	{
 		require(listingList.eligibleCollections(token), "NFT collection is not allowed");
+		require(nftBattleArena.getCurrentStage() == Stage.FirstStage, "Wrong stage!");
 		IERC721(token).transferFrom(msg.sender, address(this), id);                // Sends NFT token to this contract.
 
 		uint256 index = nftBattleArena.createStakerPosition(msg.sender, token);
@@ -55,6 +58,7 @@ contract NftStakingPosition is ERC721, Ownable
 	function unstakeNft(uint256 stakingPositionId) external
 	{
 		require(ownerOf(stakingPositionId) == msg.sender, "Not the owner of NFT");
+		require(nftBattleArena.getCurrentStage() == Stage.FirstStage, "Wrong stage!");
 
 		nftBattleArena.removeStakerPosition(stakingPositionId, msg.sender);
 
@@ -112,7 +116,10 @@ contract NftStakingPosition is ERC721, Ownable
 		{
 			require(ownerOf(stakingPositionIds[i]) == msg.sender, "Not the owner!");             // Requires to be owner of position.
 
-			reward += nftBattleArena.calculateIncentiveRewardForStaker(stakingPositionIds[i]);
+			uint256 claimed = nftBattleArena.calculateIncentiveRewardForStaker(stakingPositionIds[i]);
+			reward += claimed;
+
+			emit ClaimedIncentiveRewardFromVoting(msg.sender, beneficiary, claimed, stakingPositionIds[i]);
 		}
 
 		zoo.transfer(beneficiary, reward);

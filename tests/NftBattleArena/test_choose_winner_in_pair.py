@@ -1,4 +1,4 @@
-import brownie 
+import brownie
 from brownie import chain
 import pytest
 
@@ -12,7 +12,7 @@ def _from(account):
 
 def stake_nft(staking, account, nft, tokenId):
 	nft.approve(staking.address, tokenId, _from(account))
-	
+
 	staking.stakeNft(nft.address, tokenId, _from(account))
 
 
@@ -111,37 +111,34 @@ def test_rewards_calculations(accounts, fifth_stage):
 	print("battleRewardOfToken1: ", battleRewardOfToken1)
 	print("battleRewardOfToken2: ", battleRewardOfToken2, "\n")
 
-	tokensAtBattleEnd1 = arena.sharesToTokens(battleRewardOfToken1["yTokens"])
-	tokensAtBattleEnd2 = arena.sharesToTokens(battleRewardOfToken2["yTokens"])
+	tokensAtBattleEnd1 = arena.sharesToTokens.call(battleRewardOfToken1["yTokens"])
+	tokensAtBattleEnd2 = arena.sharesToTokens.call(battleRewardOfToken2["yTokens"])
 
 	print("tokensAtBattleEnd1: ", tokensAtBattleEnd1)
 	print("tokensAtBattleEnd2: ", tokensAtBattleEnd2, "\n")
 
-
 	pps1 = battleRewardOfToken1["pricePerShareAtBattleStart"]
 
-	price_per_share_at_vault = vault.exchangeRateStored()
+	price_per_share_at_vault = vault.exchangeRateCurrent.call()
 
 	ppsc1 = 0
 	ppsc2 = 0
 
 	# Must go through ELSE statement
 	assert pps1 != price_per_share_at_vault
-	
+
 	print("pps1 IS NOT equal to pps in vault")
-	ppsc1 = price_per_share_at_vault * pps1 / (price_per_share_at_vault - pps1)
-	ppsc2 = price_per_share_at_vault * pps1 / (price_per_share_at_vault - pps1)
+	ppsc1 = price_per_share_at_vault * pps1 // (price_per_share_at_vault - pps1)
+	ppsc2 = price_per_share_at_vault * pps1 // (price_per_share_at_vault - pps1)
 
 	assert ppsc1 != 2 ** 256 - 1
 	print("pricePerShareCoef: ", ppsc1, "\n")
 
-
-
 	print("tokensAtBattleStart1: ", battleRewardOfToken1["tokensAtBattleStart"])
 	print("tokensAtBattleStart2: ", battleRewardOfToken2["tokensAtBattleStart"], "\n")
 
-	income1 = arena.tokensToShares(tokensAtBattleEnd1 - battleRewardOfToken1["tokensAtBattleStart"])
-	income2 = arena.tokensToShares(tokensAtBattleEnd2 - battleRewardOfToken2["tokensAtBattleStart"])
+	income1 = arena.tokensToShares.call(tokensAtBattleEnd1 - battleRewardOfToken1["tokensAtBattleStart"])
+	income2 = arena.tokensToShares.call(tokensAtBattleEnd2 - battleRewardOfToken2["tokensAtBattleStart"])
 
 	x_rewards = (income1 + income2) * 5 // 1000
 	jackpot_rewards = (income1 + income2) * 1 // 100
@@ -167,21 +164,20 @@ def test_rewards_calculations(accounts, fifth_stage):
 		assert abs(reward1current["yTokensSaldo"] - (battleRewardOfToken1["yTokensSaldo"] + income1 + income2 - x_rewards - 2 * jackpot_rewards)) < eps
 		assert abs(reward2current["yTokensSaldo"] - (battleRewardOfToken2["yTokensSaldo"] - income2)) < eps
 
-		assert abs(reward1next["yTokens"] - (battleRewardOfToken1["yTokens"] + income1 + income2 - x_rewards - 2 * jackpot_rewards)) < eps
+		assert abs(reward1next["yTokens"] - (battleRewardOfToken1["yTokens"] + income2 - x_rewards - 2 * jackpot_rewards)) < eps
 		assert abs(reward2next["yTokens"] - (battleRewardOfToken2["yTokens"] - income2)) < eps
-	
+
 	else:
 		assert abs(reward1current["yTokensSaldo"] - (battleRewardOfToken1["yTokensSaldo"] - income1)) < eps
 		assert abs(reward2current["yTokensSaldo"] - (battleRewardOfToken2["yTokensSaldo"] + income1 + income2 - x_rewards - 2 * jackpot_rewards)) < eps
 
 		assert abs(reward1next["yTokens"] - (battleRewardOfToken1["yTokens"] - income1)) < eps
-		assert abs(reward2next["yTokens"] - (battleRewardOfToken2["yTokens"] + income1 + income2 - x_rewards - 2 * jackpot_rewards)) < eps
-	
+		assert abs(reward2next["yTokens"] - (battleRewardOfToken2["yTokens"] + income2 - x_rewards - 2 * jackpot_rewards)) < eps
+
 
 def test_ending_of_epoch_if_all_pairs_played(accounts, fifth_stage):
 	(zooToken, daiToken, linkToken, nft) = fifth_stage[0]
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = fifth_stage[1]
-
 
 	arena.requestRandom()
 	for pairIndex in range(4):
@@ -199,7 +195,7 @@ def test_ending_of_epoch_if_all_pairs_played(accounts, fifth_stage):
 # 	attempts = 1
 # 	participants = 3
 
-# 	
+#
 
 # 	for i in range(participants):
 # 		for j in range(participants):
@@ -208,7 +204,7 @@ def test_ending_of_epoch_if_all_pairs_played(accounts, fifth_stage):
 # 			staking.stakeNft(nft, position, _from(accounts[i]))
 
 
-	
+
 # 	# One iteration is one epoch of games with 50/50 chances of winning in every game
 # 	for attempt in range(attempts):
 # 		print(attempt)
@@ -218,11 +214,11 @@ def test_ending_of_epoch_if_all_pairs_played(accounts, fifth_stage):
 # 		# Every account votes for his NFTs
 # 		for i in range(participants):
 # 			daiToken.approve(voting, 1e21, _from(accounts[i]))
-			
+
 # 			for j in range(participants):
 # 				staking_position = 1 + j + i * participants
 # 				voting.createNewVotingPosition(staking_position, 1e20, _from(accounts[i]))
-			
+
 # 		chain.sleep(arena.secondStageDuration())
 
 # 		epoch = arena.currentEpoch()
@@ -260,7 +256,7 @@ def test_ending_of_epoch_if_all_pairs_played(accounts, fifth_stage):
 
 # 		chain.sleep(arena.thirdStageDuration())
 # 		chain.sleep(arena.fourthStageDuration())
-		
+
 # 		for i in range(len(participants) // 2):
 # 			arena.chooseWinnerInPair(i)
 

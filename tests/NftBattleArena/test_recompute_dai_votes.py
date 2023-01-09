@@ -74,3 +74,23 @@ def test_multiplying_y_tokens_reward_debt_before_claim(accounts, finished_epoch)
 
 	votingPositionWithReward = arena.votingPositionsValues(positionIndex)
 	assert votingPositionWithReward["yTokensRewardDebt"] == reward  # Reward debt increased as expected
+
+
+def test_recompute_votes(accounts, finished_epoch):
+	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = finished_epoch[1]
+	(zooToken, daiToken, linkToken, nft) = finished_epoch[0]
+
+	assert arena.votingPositionsValues(10)["daiInvested"] == 100000000000000000000
+	assert arena.votingPositionsValues(10)["zooInvested"] == 0
+	assert arena.votingPositionsValues(10)["daiVotes"] == 70000000000000000000
+	assert arena.votingPositionsValues(10)["votes"] == 70000000000000000000
+
+	chain.sleep(arena.firstStageDuration())
+
+	tx1 = arena.recomputeDaiVotes(10)
+	tx1.events["RecomputedDaiVotes"]
+
+	assert arena.votingPositionsValues(10)["daiInvested"] == 100000000000000000000
+	assert arena.votingPositionsValues(10)["zooInvested"] == 0
+	assert arena.votingPositionsValues(10)["daiVotes"] == 130000000000000000000
+	assert arena.votingPositionsValues(10)["votes"] == 130000000000000000000

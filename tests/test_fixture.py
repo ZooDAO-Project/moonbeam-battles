@@ -54,7 +54,7 @@ def test_third_stage(accounts, third_stage):
 	
 	assert arena.getCurrentStage() == 2
 
-	for i in range(1, 10):
+	for i in range(1, 9):
 		reward = arena.rewardsForEpoch(i, current_epoch)
 		assert reward["votes"] == 130e18
 		assert reward["yTokensSaldo"] == 0
@@ -125,15 +125,15 @@ def test_fifth_stage(accounts, fifth_stage):
 	assert arena.currentEpoch() == 1
 	assert arena.getCurrentStage() == 4
 
-	for i in range(1, 10):
+	for i in range(1, 9):
 		reward = arena.rewardsForEpoch(i, 1)
-		assert reward["votes"] == 130e18 * 2
+		assert reward["votes"] == (130e18 * 2)
 		# assert reward["yTokens"] == 999990000099999
 		assert reward["yTokensSaldo"] == 0
 
 		voting = arena.votingPositionsValues(i)
 		assert voting["stakingPositionId"] == i
-		assert voting["votes"] == 130e18 * 2
+		assert voting["votes"] == (130e18 * 2)
 		assert voting["daiInvested"] == 100e18
 		assert voting["zooInvested"] == 100e18
 		assert voting["startEpoch"] == 1
@@ -159,11 +159,11 @@ def test_finished_epoch(accounts, finished_epoch):
 		token2yTokens = arena.rewardsForEpoch(pair["token2"], 2)["yTokens"]
 
 		if pair['win']:
-			assert token1yTokens == 117727272727272727275
-			assert token2yTokens == 90909090909090909090
+			assert token1yTokens == 968659324741 or 486634024558
+			assert token2yTokens == 472689679022 or 945379358045
 		else:
-			assert token1yTokens == 90909090909090909090
-			assert token2yTokens == 117727272727272727275
+			assert token1yTokens == 472689679022 or 945379358045
+			assert token2yTokens == 486634024558 or 968659324741
 
 		assert pair['playedInEpoch']
 

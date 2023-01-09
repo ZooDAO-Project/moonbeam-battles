@@ -233,7 +233,7 @@ compiler:
     version: null
     optimizer:
       enabled: true
-      runs: 200
+      runs: 8
     remappings: 
       - "@chainlink=smartcontractkit/chainlink@1.1.0"
   vyper:

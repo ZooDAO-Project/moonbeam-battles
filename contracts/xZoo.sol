@@ -6,11 +6,14 @@ import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC721/ERC721.
 import "./NftBattleArena.sol";
 import "./interfaces/IVault.sol";
 
-
+/// @title XZoo
+/// @notice Contract for staking zoo for aditional rewards.
 contract XZoo is ERC721
 {
 	struct ZooStakerPosition
 	{
+		// epoch number => amount
+		mapping (uint256 => uint256) amounts; 
 		uint256 amount;
 		uint256 startEpoch;
 		uint256 endEpoch; 
@@ -51,7 +54,8 @@ contract XZoo is ERC721
 		vault = VaultAPI(_vault);
 	}
 
-	function setNftBattleArena(address _nftBattleArena) external
+	/// @notice Function to set arena address.
+	function setNftBattleArena(address payable _nftBattleArena) external
 	{
 		require(address(arena) == address(0));
 
@@ -60,6 +64,8 @@ contract XZoo is ERC721
 		emit NftBattleArenaSet(_nftBattleArena);
 	}
 
+	/// @notice Function to stake zoo.
+	/// @return xZooPositionId - Id of position.
 	function stakeZoo(uint256 amount, address beneficiary) external returns (uint256 xZooPositionId)
 	{
 		zoo.transferFrom(msg.sender, address(this), amount);
@@ -74,9 +80,11 @@ contract XZoo is ERC721
 		return indexCounter++;
 	}
 
+
+	/// @notice Function to claim reward from zoo staking.
 	function claimRewards(uint256 positionId, address beneficiary) external returns (uint256 amountOfstablecoins)
 	{
-		require(ownerOf(positionId) == msg.sender);
+		require(ownerOf(positionId) == msg.sender, "not owner");
 		updateTotalStakedUpdated();
 
 		ZooStakerPosition storage position = xZooPositions[positionId];
@@ -84,11 +92,14 @@ contract XZoo is ERC721
 		position.yTokensDebt = 0;
 		position.startEpoch = arena.currentEpoch();
 
-		amountOfstablecoins = vault.redeemUnderlying(rewards, beneficiary);
+		vault.redeem(rewards);
+		amountOfstablecoins = stablecoin.balanceOf(address(this));
+		IERC20(arena.dai()).transfer(beneficiary, amountOfstablecoins);
 
 		emit Claimed(msg.sender, beneficiary, amountOfstablecoins, positionId);
 	}
 
+	/// @notice Function to return zoo to beneficiary used when staked.
 	function unlockZoo(uint256 positionId, address beneficiary) external returns (uint256 amountOfZoo)
 	{
 		require(ownerOf(positionId) == msg.sender);
@@ -96,35 +107,42 @@ contract XZoo is ERC721
 
 		ZooStakerPosition storage position = xZooPositions[positionId];
 		require(position.endEpoch == 0);
+		position.yTokensDebt = getPendingReward(positionId);
 		position.endEpoch = arena.currentEpoch();
 		zoo.transfer(beneficiary, position.amount);
 		totalStakedZoo[arena.currentEpoch() + 1] -= int256(position.amount);
 
 		emit ZooWithdrawal(msg.sender, beneficiary, position.amount, positionId);
-
-		return position.amount;
+		amountOfZoo = position.amount;
+		position.amount = 0;
 	}
 
+	/// @notice Function for both unlock and claim.
 	function unlockAndClaim(uint256 positionId, address beneficiary) external returns (uint256 amountOfZoo, uint256 rewardsForClaimer)
 	{
 		require(ownerOf(positionId) == msg.sender);
 		updateTotalStakedUpdated();
 
 		ZooStakerPosition storage position = xZooPositions[positionId];
+		require(position.endEpoch == 0);
 		uint256 rewards = getPendingReward(positionId);
 		position.yTokensDebt = 0;
 		position.startEpoch = arena.currentEpoch();
-		uint256 amountOfstablecoins = vault.redeemUnderlying(rewards, beneficiary);
+		vault.redeem(rewards);
+		uint256 amountOfstablecoins = stablecoin.balanceOf(address(this));
+		IERC20(stablecoin).transfer(beneficiary, amountOfstablecoins);
 		position.endEpoch = arena.currentEpoch();
 		zoo.transfer(beneficiary, position.amount);
 		totalStakedZoo[arena.currentEpoch() + 1] -= int256(position.amount);
 
 		emit Claimed(msg.sender, beneficiary, amountOfstablecoins, positionId);
 		emit ZooWithdrawal(msg.sender, beneficiary, position.amount, positionId);
-
-		return (position.amount, amountOfstablecoins);
+		amountOfZoo = position.amount;
+		rewardsForClaimer = amountOfstablecoins;
+		position.amount = 0;
 	}
 
+	/// @notice Function to add zoo to position.
 	function addZoo(uint256 positionId, uint256 amount) external
 	{
 		require(ownerOf(positionId) == msg.sender);
@@ -134,15 +152,19 @@ contract XZoo is ERC721
 
 		zoo.transferFrom(msg.sender, address(this), amount);
 
-		position.yTokensDebt = getPendingReward(positionId);
-		position.startEpoch = arena.currentEpoch();
+		uint256 currentEpoch = arena.currentEpoch();
+		position.yTokensDebt += getPendingReward(positionId);
+		if (position.startEpoch <= currentEpoch)
+			position.startEpoch = currentEpoch;
 
+		position.amounts[currentEpoch] = position.amounts[currentEpoch] == 0 ? position.amount : position.amounts[currentEpoch];
 		position.amount += amount;
-		totalStakedZoo[arena.currentEpoch() + 1] += int256(amount);
+		totalStakedZoo[currentEpoch + 1] += int256(amount);
 
 		emit ZooStaked(msg.sender, ownerOf(positionId), amount, positionId);
 	}
 
+	/// @notice Function to withdraw only part of staked zoo.
 	function withdrawZoo(uint256 positionId, uint256 amount, address beneficiary) external
 	{
 		require(ownerOf(positionId) == msg.sender);
@@ -151,11 +173,14 @@ contract XZoo is ERC721
 		ZooStakerPosition storage position = xZooPositions[positionId];
 		require(position.endEpoch == 0);
 
-		position.yTokensDebt = getPendingReward(positionId);
-		position.startEpoch = arena.currentEpoch();
+		position.yTokensDebt += getPendingReward(positionId);
+		uint256 currentEpoch = arena.currentEpoch();
+		if (position.startEpoch <= currentEpoch)
+			position.startEpoch = currentEpoch;
 
+		position.amounts[currentEpoch] = position.amounts[currentEpoch] == 0 ? position.amount - amount : position.amounts[currentEpoch] - amount;
 		position.amount -= amount;
-		totalStakedZoo[arena.currentEpoch() + 1] -= int256(amount);
+		totalStakedZoo[currentEpoch + 1] -= int256(amount);
 		zoo.transfer(beneficiary, amount);
 
 		emit ZooWithdrawal(msg.sender, beneficiary, amount, positionId);
@@ -163,12 +188,16 @@ contract XZoo is ERC721
 
 	function updateTotalStakedUpdated() public
 	{
-		for (uint256 i = lastEpochWhereTotalStakedUpdated + 1; i < arena.currentEpoch(); i++)
+		uint256 i = lastEpochWhereTotalStakedUpdated + 1;
+		for (; i < arena.currentEpoch(); i++)
 		{
 			totalStakedZoo[i] += totalStakedZoo[i - 1];
 		}
+
+		lastEpochWhereTotalStakedUpdated = i - 1;
 	}
 
+	/// @notice Function to get pending reward from staking zoo.
 	function getPendingReward(uint256 positionId) public view returns (uint256 yvTokens)
 	{
 		ZooStakerPosition storage position = xZooPositions[positionId];
@@ -177,7 +206,15 @@ contract XZoo is ERC721
 
 		for (uint256 epoch = position.startEpoch; epoch < end; epoch++)
 		{
-			yvTokens += position.amount * arena.xZooRewards(epoch) / uint256(totalStakedZoo[epoch]); 
+			yvTokens += getAmountByEpochAndPosition(epoch, position) * arena.xZooRewards(epoch) / uint256(totalStakedZoo[epoch]); 
 		}
+	}
+
+	function getAmountByEpochAndPosition(uint256 epoch, ZooStakerPosition storage position) internal view returns (uint256 amount)
+	{
+		if (position.amounts[epoch] == 0)
+			return position.amount;
+		else
+			position.amounts[epoch];
 	}
 }

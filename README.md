@@ -1,7 +1,7 @@
 # ZooDAO 
-## NFT Battles Arena
+## Nft battles arena
 
-#### This repository contains system of contracts associated with NFT battles of the ZooDAO project.
+#### This repository contains system of contracts associated with Nft battles of the ZooDAO project.
 
 | contract | description |
 | --- | --- |

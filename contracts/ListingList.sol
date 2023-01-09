@@ -34,9 +34,9 @@ contract ListingList is Ownable, ERC721
 
 	event RoyalteRecipientChanged(address indexed collection, address recipient);
 
-	event VotedForCollection(address indexed collection, address indexed voter, uint256 amount);
+	event VotedForCollection(address indexed collection, address indexed voter, uint256 amount, uint256 positionId);
 
-	event ZooUnlocked(address indexed voter,address indexed collection, uint256 amount);
+	event ZooUnlocked(address indexed voter, address indexed collection, uint256 amount, uint256 positionId);
 
 	mapping (address => uint256) public lastUpdatedEpochsForCollection;
 
@@ -177,11 +177,10 @@ contract ListingList is Ownable, ERC721
 	{
 		require(eligibleCollections[collection], "NFT collection is not allowed");
 		require(lockTime <= maxTimelock && lockTime >= minTimelock, "incorrect lockTime");
-		
 
 		zoo.transferFrom(msg.sender, address(this), amount);
 
-		addRecordForNewPosition(collection, amount, lockTime, msg.sender);
+		addRecordForNewPosition(collection, amount, lockTime, msg.sender, vePositionIndex);
 
 		tokenOfOwnerByIndex[msg.sender].push(vePositionIndex);
 		_mint(msg.sender, vePositionIndex++);
@@ -189,24 +188,26 @@ contract ListingList is Ownable, ERC721
 
 	function unlockZoo(uint256 positionId) external
 	{
-		VePositionInfo storage vePosition = vePositions[positionId];
 		require(ownerOf(positionId) == msg.sender);
+		VePositionInfo storage vePosition = vePositions[positionId];
+
 		uint256 currentEpoch = getEpochNumber(block.timestamp);
-		
+
 		require(block.timestamp >= vePosition.expirationDate, "time lock doesn't expire");
 
 		zoo.transfer(msg.sender, vePosition.zooLocked);
 		_burn(positionId);
 
-		emit ZooUnlocked(msg.sender, vePosition.collection, vePosition.zooLocked);
+		emit ZooUnlocked(msg.sender, vePosition.collection, vePosition.zooLocked, positionId);
 	}
 
 	function prolongate(uint256 positionId, uint256 lockTime) external
 	{
 		require(lockTime <= maxTimelock && lockTime >= minTimelock, "incorrect lockTime");
+		require(ownerOf(positionId) == msg.sender);
 
 		VePositionInfo storage vePosition = vePositions[positionId];
-		require(ownerOf(positionId) == msg.sender);
+
 		uint256 currentEpoch = getEpochNumber(block.timestamp);
 		uint256 expirationEpoch = getEpochNumber(vePosition.expirationDate);
 		address collection = vePosition.collection;
@@ -215,23 +216,25 @@ contract ListingList is Ownable, ERC721
 		updateCurrentEpochAndReturnPoolWeight(collection);
 		updateCurrentEpochAndReturnPoolWeight(address(0));
 
-		if (vePosition.expirationDate < block.timestamp)
+		if (vePosition.expirationDate > block.timestamp) // If position has not expired yet. We need to liquidate it and recreate.
 		{
 			collectionRecords[collection][expirationEpoch].rateOfIncrease -= decayRate;
-			collectionRecords[collection][getEpochNumber(block.timestamp)].rateOfIncrease += decayRate;
+			collectionRecords[collection][currentEpoch + 1].rateOfIncrease += decayRate;
+			collectionRecords[address(0)][expirationEpoch].rateOfIncrease -= decayRate;
+			collectionRecords[address(0)][currentEpoch + 1].rateOfIncrease += decayRate;
 		}
 
-		addRecordForNewPosition(collection, vePosition.zooLocked, lockTime, msg.sender);
+		addRecordForNewPosition(collection, vePosition.zooLocked, lockTime, msg.sender, positionId);
 	}
 
-	function addRecordForNewPosition(address collection, uint256 amount, uint256 lockTime, address owner) internal
+	function addRecordForNewPosition(address collection, uint256 amount, uint256 lockTime, address owner, uint256 positionId) internal
 	{
 		uint256 weight = amount * lockTime / maxTimelock;
 		uint256 currentEpoch = getEpochNumber(block.timestamp);
 
 		uint256 unlockEpoch = getEpochNumber(block.timestamp + lockTime);
 		uint256 decay = weight / lockTime;
-		vePositions[vePositionIndex] = VePositionInfo(block.timestamp + lockTime, amount, collection, decay);
+		vePositions[positionId] = VePositionInfo(block.timestamp + lockTime, amount, collection, decay);
 
 		collectionRecords[address(0)][currentEpoch + 1].decayRate += decay;
 		collectionRecords[address(0)][currentEpoch + 1].weightAtTheStart += weight;
@@ -241,7 +244,7 @@ contract ListingList is Ownable, ERC721
 		collectionRecords[address(0)][unlockEpoch].rateOfIncrease += decay;
 		collectionRecords[collection][unlockEpoch].rateOfIncrease += decay;
 		
-		emit VotedForCollection(collection, msg.sender, amount);
+		emit VotedForCollection(collection, msg.sender, amount, positionId);
 	}
 
 	function computeVectorForEpoch(address collection, uint256 epochIndex) internal view returns (uint256)

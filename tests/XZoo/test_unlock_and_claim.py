@@ -12,3 +12,7 @@ def test_unlock_and_claim_zoo(tokens, battles, accounts):
 
 	assert zooToken.balanceOf(accounts[-1]) == value
 	assert tx1.return_value == (value, 0)
+
+	id = tx.events["ZooStaked"]["positionId"]
+	position = xZoo.xZooPositions(id)
+	assert position["endEpoch"] >= position["startEpoch"]

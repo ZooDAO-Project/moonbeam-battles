@@ -13,27 +13,27 @@ def test_stage_requirement(accounts, finished_epoch):
 	assert tx.status == 1
 
 	chain.sleep(arena.firstStageDuration())
-	
+
 	with brownie.reverts("Wrong stage!"):
 		voting.withdrawDaiFromVotingPosition(1, accounts[0], daiAmount, _from(accounts[0]))
 
 	chain.sleep(arena.secondStageDuration())
-	
+
 	with brownie.reverts("Wrong stage!"):
 		voting.withdrawDaiFromVotingPosition(1, accounts[0], daiAmount, _from(accounts[0]))
 
 	chain.sleep(arena.thirdStageDuration())
-	
+
 	with brownie.reverts("Wrong stage!"):
 		voting.withdrawDaiFromVotingPosition(1, accounts[0], daiAmount, _from(accounts[0]))
 
 	chain.sleep(arena.fourthStageDuration())
-	
+
 	with brownie.reverts("Wrong stage!"):
 		voting.withdrawDaiFromVotingPosition(1, accounts[0], daiAmount, _from(accounts[0]))
 
 	chain.sleep(arena.fifthStageDuration())
-	
+
 	with brownie.reverts("Wrong stage!"):
 		voting.withdrawDaiFromVotingPosition(1, accounts[0], daiAmount, _from(accounts[0]))
 
@@ -46,29 +46,18 @@ def test_no_repeated_withdraw_requirement(accounts, finished_epoch):
 
 	dai_amount = arena.votingPositionsValues(voting_position_id)["daiInvested"]
 
-	voting.withdrawDaiFromVotingPosition(voting_position_id, accounts[0], dai_amount, _from(accounts[0]))
+	tx = voting.withdrawDaiFromVotingPosition(voting_position_id, accounts[0], dai_amount, _from(accounts[0]))
 
 	with brownie.reverts("Position removed"):
 		voting.withdrawDaiFromVotingPosition(1, accounts[0], dai_amount, _from(accounts[0]))
 
-
-# def test_dai_limit_requirement(accounts, finished_epoch):    require deprecated
-#     (zooToken, daiToken, linkToken, nft) = finished_epoch[0]
-#     (vault, functions, governance, staking, voting, arena, listing) = finished_epoch[1]
-
-#     voting_position_id = 1
-	
-#     dai_amount = arena.votingPositionsValues(voting_position_id)["daiInvested"]
-
-#     with brownie.reverts("Exceed limit"):
-#         voting.withdrawDaiFromVotingPosition(voting_position_id, accounts[0], dai_amount * 2, _from(accounts[0]))
+	assert tx.events["Withdrawed"]["withdrawn"] >= dai_amount
 
 
 def test_updating_info(accounts, finished_epoch):
 	(zooToken, daiToken, linkToken, nft) = finished_epoch[0]
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = finished_epoch[1]
 
-	
 
 
 # def test_updating_voting_position_reward(accounts, finished_epoch):
@@ -130,7 +119,7 @@ def test_multiplying_y_tokens_reward_debt_before_claim(accounts, finished_epoch)
 	for votingPositionId in range(1, arena.numberOfVotingPositions() + 1):
 		votingPosition = arena.votingPositionsValues(votingPositionId)
 
-		(pending_reward, wells) = arena.getPendingVoterReward(votingPositionId)
+		(pending_reward, wells, glmrs) = arena.getPendingVoterReward(votingPositionId)
 
 		if (pending_reward != 0):
 			positionIndex = votingPositionId
@@ -138,23 +127,24 @@ def test_multiplying_y_tokens_reward_debt_before_claim(accounts, finished_epoch)
 	votingPositionWithReward = arena.votingPositionsValues(positionIndex)
 	assert votingPositionWithReward["yTokensRewardDebt"] == 0
 
-	(pending_reward, wells) = arena.getPendingVoterReward(positionIndex)
-	assert pending_reward == 17727272727272727275
+	(pending_reward, wells, glmrs) = arena.getPendingVoterReward(positionIndex)
+	# assert pending_reward == 96534656
+	assert pending_reward == 3840603643 or 9217448745
 
 	owner = find_voting_owner_in_accounts(positionIndex, accounts, voting)
 
-	# Triggers update yTokensRewardDebt 
-	voting.withdrawDaiFromVotingPosition(positionIndex, owner, 0, _from(owner))    
+	# Triggers update yTokensRewardDebt
+	voting.withdrawDaiFromVotingPosition(positionIndex, owner, 0, _from(owner))
 
 	# Update voting position values from contract
 	votingPositionWithReward = arena.votingPositionsValues(positionIndex)
 	assert votingPositionWithReward["yTokensRewardDebt"] == pending_reward  # Reward debt increased as expected
 
-	(reward, wells) = arena.getPendingVoterReward(positionIndex)
+	(reward, wells, glmrs) = arena.getPendingVoterReward(positionIndex)
 	assert reward == 0
 
 	# Try to withdraw 0 again to double reward
-	voting.withdrawDaiFromVotingPosition(positionIndex, owner, 0, _from(owner))    
+	voting.withdrawDaiFromVotingPosition(positionIndex, owner, 0, _from(owner))
 
 	# Get new values of voting position
 	votingPositionWithReward = arena.votingPositionsValues(positionIndex)

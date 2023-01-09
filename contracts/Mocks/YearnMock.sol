@@ -23,44 +23,45 @@ contract YearnMock is ERC20
 		frax = ERC20(_frax);
 	}
 
-	function exchangeRateStored() public view returns (uint256) 
+	function exchangeRateCurrent() public returns (uint256) 
 	{
 		if (mockBalance == 0 || totalSupply() == 0)
 		{
-			return 10**18;
+			return 209460678715639526810127788;
 		}
 		else
 		{
-			return mockBalance * (10**18) / (totalSupply());
+			return mockBalance * 10**18 / totalSupply();
 		}
 	}
 
 	/// @notice Function to convert yTokens to frax
 	/// @param numShares - amount of yTokens
-	function _shareValue(uint256 numShares) public view returns (uint256)
+	function _shareValue(uint256 numShares) public returns (uint256)
 	{
-		if (totalSupply() > 0)
+		/*if (totalSupply() > 0)
 		{
-			return mockBalance * (numShares) / (totalSupply());
+			return mockBalance * numShares / totalSupply();
 		}
 		else
 		{
-			return numShares;
-		}
+			return numShares * 2 * 10**10;
+		}*/
+		return exchangeRateCurrent() * numShares / 10 **18;
 	}
 
 	/// @notice function to convert frax to yTokens.
 	/// @param amount - amount of frax.
-	function _sharesForValue(uint256 amount) public view returns (uint256)
+	function _sharesForValue(uint256 amount) public returns (uint256)
 	{
-		if (totalSupply() > 0)
-		{
-			return amount * 10**18 / exchangeRateStored();
-		}
+		/*if (totalSupply() > 0)
+		{*/
+			return amount * 10**18 / exchangeRateCurrent();
+		/*}
 		else
 		{
-			return amount;
-		}
+			return amount / 2 / 10**10;
+		}*/
 	}
 
 	/// @param amount - amount of frax.
@@ -82,17 +83,17 @@ contract YearnMock is ERC20
 
 	/// @param shares - amount of yTokens
 	/// @return withdrawn - amount of frax.
-	function redeemUnderlying(uint256 shares, address receiver) public returns (uint256 withdrawn)
+	function redeem(uint256 shares) public returns (uint256 withdrawn)
 	{
 		withdrawn = _shareValue(shares); // convert yTokens to frax.
 
 		_burn(msg.sender, shares);
 
-		frax.transfer(receiver, withdrawn);
+		frax.transfer(msg.sender, withdrawn);
 
 		mockBalance -= withdrawn;
 
-		emit Withdrawed(shares, withdrawn, receiver);
+		emit Withdrawed(shares, withdrawn, msg.sender);
 
 		return withdrawn;
 	}
@@ -116,7 +117,7 @@ contract YearnMock is ERC20
 	function increaseMockBalance() external
 	{
 		// uint256 increaseLimit = mockBalance * 10 / 100;
-		uint256 amount = mockBalance * 10 / 100;
+		uint256 amount = mockBalance * 1 / 100;
 		// require(amount <= increaseLimit, "transfer amount too hight");
 		require(block.timestamp > lastDate + timeDelay, "transfer has been recently");
 
@@ -127,4 +128,9 @@ contract YearnMock is ERC20
 
 		emit IncreasedBalance(amount, lastDate, msg.sender);
 	}
+
+	function decimals() public view virtual override returns (uint8)
+	{
+        return 8;
+    }
 }
