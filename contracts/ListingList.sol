@@ -149,6 +149,8 @@ contract ListingList is Ownable, ERC721
 
 			royalteRecipient[tokens[i]] = royalteRecipients[i];                     // Recipient for % of reward from that nft collection.
 
+			lastUpdatedEpochsForCollection[tokens[i]] = getEpochNumber(block.timestamp);
+
 			emit NewContractAllowed(tokens[i], royalteRecipients[i]);                                     // Emits event that new contract are allowed.
 		}
 	}
