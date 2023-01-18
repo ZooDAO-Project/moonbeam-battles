@@ -4,6 +4,7 @@ from brownie import *
 def main():
 	active_network = network.show_active()
 	account = accounts.load(active_network)
+	treasury = "0x24410c1d93d1216E126b6A6cd32d79f634308b3b"
 
 	vault = "0x1C55649f73CDA2f72CEf3DD6C5CA3d49EFcF484C"
 	frax = "0x322E86852e492a7Ee17f28a78c663da38FB33bfb"
@@ -14,9 +15,18 @@ def main():
 	zooToken = Token.deploy("Zoo", "ZOO", {"from": account})
 
 	collections = ["0x8fBE243D898e7c88A6724bB9eB13d746614D23d6", "0x139e9BA28D64da245ddB4cF9943aA34f6d5aBFc5", "0x2159762693C629C5A44Fc9baFD484f8B96713467", "0x02A6DeC99B2Ca768D638fcD87A96F6069F91287c", "0x87C359d86bD8C794124090A82E0930c3Cab88F01"]
-	royalty = ["0xd8C81D0706a027B870c20cC386BBffb15A36815e", "0xa25b6FefE3e397E179DB42837a5e424120243E6A", account, account, account]
+	royalty = [treasury, treasury, treasury, treasury, treasury]
 
-	faucet = ZooTokenFaucet.deploy("zNFT0", "zNFT0", zooToken.address, frax, collections, {"from": account}, publish_source=True) # faucet
+	attemptsAmount = 1 # attempt limit for calling functions like for get tokens or get nfts.
+	faucet = ZooTokenFaucet.deploy(zooToken.address, attemptsAmount, {"from": account}, publish_source=True) # faucet
+
+	# addresses for whiteList in case they need to change something or take more tokens.
+	# TrevorAddress = "0x7f8ff0898d51D0B515868585F09a338e42b0CBa1" # need to fill his address.
+	# JoshAddress = "0x7f8ff0898d51D0B515868585F09a338e42b0CBa1"   # need to fill his address.
+	# RhinatAddress = "0x7f8ff0898d51D0B515868585F09a338e42b0CBa1" # need to fill his address.
+
+	alexeyAddress = "0x7f8ff0898d51D0B515868585F09a338e42b0CBa1" # and for me in case would need something to change instead of them.
+	faucet.batchAddToWhiteList([alexeyAddress], {"from": account})
 
 	zooToken.mint(faucet.address, 5e26)
 	zooToken.mint(account, 1e26)
@@ -25,17 +35,18 @@ def main():
 	zooToken.mint("0x47515585ef943F8E56C17BA0f50fb7E28CE1c4Dc", 5e26)
 	zooToken.mint("0x804b8ff3b23b319208ab5e4053a02a2ba0364430", 5e26)
 	zooToken.mint("0x5232f14c6969102c1afda0c8d81758ea638c0a3b", 5e26)
+	zooToken.mint("0x9498af223fa03a0ea9247bfb330600eec2ddc23b", 5e26)
 
 	functions = BaseZooFunctions.deploy(ZERO_ADDRESS, ZERO_ADDRESS, {"from": account}, publish_source=True)
-	functions.setStageDuration(0, 60 * 10, {"from": account}) # 1 stage - 10 mins
-	functions.setStageDuration(1, 60 * 10, {"from": account}) # 2 stage - 10 mins
-	functions.setStageDuration(2, 60 * 10, {"from": account}) # 3 stage - 10 mins
+	functions.setStageDuration(0, 60 * 20, {"from": account}) # 1 stage - 20 mins
+	functions.setStageDuration(1, 60 * 20, {"from": account}) # 2 stage - 20 mins
+	functions.setStageDuration(2, 60 * 20, {"from": account}) # 3 stage - 20 mins
 	functions.setStageDuration(3, 60 * 20, {"from": account}) # 4 stage - 20 mins
-	functions.setStageDuration(4, 60 * 10, {"from": account}) # 5 stage - 10 mins
+	functions.setStageDuration(4, 60 * 20, {"from": account}) # 5 stage - 20 mins
 	governance = ZooGovernance.deploy(functions, account, {"from": account}, publish_source=True)
 
-	duration_of_incentive_rewards = 60 * 60 * 4 # 4 epoch duration of arena
-	ve_zoo = ListingList.deploy(zooToken, 3600, 3600, 14400, duration_of_incentive_rewards, {"from": account}, publish_source=True)
+	duration_of_incentive_rewards = 60 * 20 * 5 * 96 # 96 epoch duration of arena
+	ve_zoo = ListingList.deploy(zooToken, 6000, 6000, 24000, duration_of_incentive_rewards, {"from": account}, publish_source=True)
 
 	staking = NftStakingPosition.deploy("zStakerPosition", "ZSP", ve_zoo, zooToken, {"from": account}, publish_source=True)
 	voting = NftVotingPosition.deploy("zVoterPosition", "ZVP",

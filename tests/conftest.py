@@ -36,26 +36,26 @@ def listingListForUnitTest_test_values(accounts, tokens, ListingList):
 	return (listingList, zooToken)
 
 @pytest.fixture(scope="module")
-def testnet(accounts, ZooTokenFaucet, ZooTokenMock, Dai, ZooNft):
+def testnet(accounts, ZooTokenFaucet, ZooTokenMock):
 
-	nft = ZooNft.deploy("zNFT", "zNFT", {"from": accounts[0]}) # testnet nft contract 1
-	nft1 = ZooNft.deploy("zNFT1", "zNFT1", {"from": accounts[0]}) # testnet nft contract 2
-	nft2 = ZooNft.deploy("zNFT2", "zNFT2", {"from": accounts[0]}) # testnet nft contract 3
-	nft3 = ZooNft.deploy("zNFT3", "zNFT3", {"from": accounts[0]}) # testnet nft contract 4
+	# nft = ZooNft.deploy("zNFT", "zNFT", {"from": accounts[0]}) # testnet nft contract 1
+	# nft1 = ZooNft.deploy("zNFT1", "zNFT1", {"from": accounts[0]}) # testnet nft contract 2
+	# nft2 = ZooNft.deploy("zNFT2", "zNFT2", {"from": accounts[0]}) # testnet nft contract 3
+	# nft3 = ZooNft.deploy("zNFT3", "zNFT3", {"from": accounts[0]}) # testnet nft contract 4
 
 	zooToken = ZooTokenMock.deploy("name", "symbol", "18", 1e26, {"from": accounts[0]})
-	daiToken = Dai.deploy(1, {"from": accounts[0]})
-	faucet = ZooTokenFaucet.deploy("name", "symbol", zooToken, daiToken, [nft, nft1, nft2, nft3], {"from": accounts[0]})
+	# daiToken = Dai.deploy(1, {"from": accounts[0]})
+	faucet = ZooTokenFaucet.deploy(zooToken, 1, {"from": accounts[0]})
 
-	nft.transferOwnership(faucet.address)
-	nft1.transferOwnership(faucet.address)
-	nft2.transferOwnership(faucet.address)
-	nft3.transferOwnership(faucet.address)
+	# nft.transferOwnership(faucet.address)
+	# nft1.transferOwnership(faucet.address)
+	# nft2.transferOwnership(faucet.address)
+	# nft3.transferOwnership(faucet.address)
 
 	zooToken.transfer(faucet.address, 4e25, {"from": accounts[0]})
-	daiToken.mint(faucet.address, 4e25, {"from": accounts[0]})
+	# daiToken.mint(faucet.address, 4e25, {"from": accounts[0]})
 
-	return (nft, nft1, nft2, nft3, faucet)
+	return faucet
 
 @pytest.fixture(scope="module")
 def tokens(accounts, ZooNftFaucet, ZooTokenMock, Dai):
