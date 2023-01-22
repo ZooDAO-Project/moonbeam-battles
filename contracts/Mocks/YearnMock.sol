@@ -78,7 +78,7 @@ contract YearnMock is ERC20
 
 		emit Deposited(amount, shares, msg.sender);
 
-		return shares;
+		return 0;
 	}
 
 	/// @param shares - amount of yTokens
@@ -95,7 +95,7 @@ contract YearnMock is ERC20
 
 		emit Withdrawed(shares, withdrawn, msg.sender);
 
-		return withdrawn;
+		return 0;
 	}
 /*
 	/// @param fraxNumber - amount of frax
