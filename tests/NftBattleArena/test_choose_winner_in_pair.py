@@ -172,7 +172,7 @@ def test_rewards_calculations(accounts, fifth_stage):
 		assert abs(reward2current["yTokensSaldo"] - (battleRewardOfToken2["yTokensSaldo"] + income1 + income2 - x_rewards - 2 * jackpot_rewards)) < eps
 
 		assert abs(reward1next["yTokens"] - (battleRewardOfToken1["yTokens"] - income1)) < eps
-		assert abs(reward2next["yTokens"] - (battleRewardOfToken2["yTokens"] + income2 - x_rewards - 2 * jackpot_rewards)) < eps
+		assert abs(reward2next["yTokens"] - (battleRewardOfToken2["yTokens"] + income1 - x_rewards - 2 * jackpot_rewards)) < eps
 
 
 def test_ending_of_epoch_if_all_pairs_played(accounts, fifth_stage):
