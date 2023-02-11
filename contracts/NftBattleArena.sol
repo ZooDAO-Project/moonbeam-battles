@@ -214,6 +214,9 @@ contract NftBattleArena
 	// voting position id => debt
 	mapping (uint256 => Debt) public debtOfPosition;
 
+	// epoch => total active votes (in played nfts)
+	mapping (uint256 => uint256) public totalActiveVotesByEpoch;
+
 	modifier only(address who)
 	{
 		require(msg.sender == who);
@@ -819,13 +822,13 @@ contract NftBattleArena
 		{
 			int256 saldo = rewardsForEpoch[stakingPositionId][i].yTokensSaldo;         // Gets saldo from staker position for every epoch in range.
 
-			uint256 totalVotes = rewardsForEpoch[stakingPositionId][i].votes;          // Gets total votes from staker position.
+			//uint256 totalVotes = rewardsForEpoch[stakingPositionId][i].votes;          // Gets total votes from staker position.
 			if (saldo > 0)
 			{
-				yTokens += uint256(saldo) * votingPosition.votes / totalVotes;         // Calculates yTokens amount for voter.
+				yTokens += uint256(saldo) * votingPosition.votes / rewardsForEpoch[stakingPositionId][i].votes;         // Calculates yTokens amount for voter.
 
 				uint256 nominator = 965 * votingPosition.votes;
-				uint256 denominator = totalVotes * numberOfPlayedPairsInEpoch[i] * 1000;
+				uint256 denominator = totalActiveVotesByEpoch[i] * 1000;
 				wells += wellClaimedByEpoch[i] * nominator / denominator; // 96.5%
 				glmrs += glmrClaimedByEpoch[i] * nominator / denominator;
 			}
@@ -961,6 +964,7 @@ contract NftBattleArena
 		uint256 votes2 = rewardsForEpoch[pair.token2][currentEpoch].votes;
 		uint256 randomNumber = zooFunctions.getRandomResult();                              // Gets random number from zooFunctions.
 
+		totalActiveVotesByEpoch[currentEpoch] += votes1 + votes2;
 		pair.win = zooFunctions.decideWins(votes1, votes2, randomNumber);                   // Calculates winner and records it.
 		pair.playedInEpoch = true;                                                          // Records that this pair already played this epoch.
 		numberOfPlayedPairsInEpoch[currentEpoch]++;                                         // Increments amount of pairs played this epoch.
