@@ -14,6 +14,20 @@ def isolate(fn_isolation):
 	pass
 
 @pytest.fixture(scope="module")
+def winnersJackpot(fifth_stage, WinnersJackpot, accounts):
+	(zooToken, daiToken, linkToken, nft) = fifth_stage[0]
+	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = fifth_stage[1]
+
+	rewardAmount = 2500 * 10 ** 18
+	winnersJackpot = WinnersJackpot.deploy(functions, voting, daiToken, zooToken, rewardAmount, rewardAmount, {"from": accounts[0]})
+	arena.requestRandom()
+
+	zooToken.transfer(winnersJackpot.address, 10e25, {"from": accounts[0]})
+	daiToken.mint(winnersJackpot.address, 10e25, {"from": accounts[0]})
+
+	return (winnersJackpot)
+
+@pytest.fixture(scope="module")
 def listingListForUnitTest(accounts, tokens, ListingList):
 	zooToken = tokens[0]
 	min_timelock = 1814400
@@ -59,7 +73,7 @@ def testnet(accounts, ZooTokenFaucet, ZooTokenMock):
 
 @pytest.fixture(scope="module")
 def tokens(accounts, ZooNftFaucet, ZooTokenMock, Dai):
-	zooToken = ZooTokenMock.deploy("name", "symbol", "18", 1e26, {"from": accounts[0]})
+	zooToken = ZooTokenMock.deploy("name", "symbol", "18", 2e26, {"from": accounts[0]}) # increased amount of zoo minted for winnersjackpot reward
 	# daiToken = ZooTokenMock.deploy("name", "symbol", "18", 1e26, {"from": accounts[0]})
 	daiToken = Dai.deploy(1, {"from": accounts[0]})
 	linkToken = ZooTokenMock.deploy("name", "symbol", "18", 1e26, {"from": accounts[0]})

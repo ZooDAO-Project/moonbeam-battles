@@ -41,7 +41,10 @@ def main(ve_zoo):
 	"0x139e9BA28D64da245ddB4cF9943aA34f6d5aBFc5", # Canary Network Agency
 	"0x648763838b02054A237bdF86Cc1B70238cb50aF5", # Party Bears
 	"0x756A9DC8181ABea18c2CC6575DCFcdD2c604aB6F", # Lyke Island Inhabitants
-	"0x4316f538ed997e2e92ab92ee5c1b9f126e21578e"] # Cosmos Kidz
+	"0x4316f538ed997e2e92ab92ee5c1b9f126e21578e", # Cosmos Kidz
+	"0x332d68561a7aee5879a369411e059856d4580094", # Feline Fiendz
+	"0xBc6219FC9f3521A8A566359906D6D0689c53DAcC", # Moonwalkers
+	"0xbe1f1f4e1a4907d3a6debc110e1e9f551909c89c"] # ZOO DAO GEN 0
 
 
 	royalty = ["0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Alley Katz
@@ -79,8 +82,11 @@ def main(ve_zoo):
 	"0xa25b6FefE3e397E179DB42837a5e424120243E6A", # Canary Network Agency
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Party Bears
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Lyke Island Inhabitants
-	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b"] # Cosmos Kidz
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Cosmos Kidz
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Feline Fiendz
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Moonwalkers
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b"] # ZOO DAO GEN 0
 
-	### Currently, total of 36 collections and royalte recipient.
+	### Currently, total of 39 collections and royalte recipient.
 
 	ve_zoo.batchAllowNewContract(collections, royalty, {"from": account})

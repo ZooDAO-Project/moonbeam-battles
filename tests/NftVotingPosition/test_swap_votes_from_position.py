@@ -34,7 +34,7 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(1)["endEpoch"] == 0
 	assert arena.votingPositionsValues(1)["zooInvested"] == initialAmount
 	assert daiToken.balanceOf(account0) == 39999700000000000000000000
-	assert zooToken.balanceOf(account0) == 13749600000000000000000000
+	assert zooToken.balanceOf(account0) == 113749600000000000000000000
 
 	assert arena.votingPositionsValues(4)["daiInvested"] == initialAmount
 	assert arena.votingPositionsValues(4)["endEpoch"] == 0
@@ -64,7 +64,7 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(1)["endEpoch"] == 0
 	assert arena.votingPositionsValues(1)["zooInvested"] == (initialAmount - swapAmount)
 	assert daiToken.balanceOf(account0) == 39999700000000000000000000
-	assert zooToken.balanceOf(account0) == 13749609950000000000000000
+	assert zooToken.balanceOf(account0) == 113749609950000000000000000
 
 	assert arena.votingPositionsValues(4)["daiInvested"] == (initialAmount - swapAmount) # dai withdrawed
 	assert arena.votingPositionsValues(4)["endEpoch"] == 0
