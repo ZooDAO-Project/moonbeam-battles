@@ -1,6 +1,8 @@
 # ZooDAO 
 ## Nft battles arena
 
+[Litepaper](https://zoodao.com/docs/ZooDAO-Litepaper.pdf)
+
 #### This repository contains system of contracts associated with Nft battles of the ZooDAO project.
 
 | contract | description |
