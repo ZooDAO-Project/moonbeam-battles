@@ -8,7 +8,7 @@ from _utils.utils import _from
 def test_balance(accounts, tokens):
 	(zooToken, daiToken, linkToken, nft) = tokens
 
-	assert zooToken.balanceOf(accounts[0]) == 2e25
+	assert zooToken.balanceOf(accounts[0]) == 12e25
 	assert zooToken.balanceOf(accounts[1]) == 4e25
 	assert zooToken.balanceOf(accounts[2]) == 4e25
 

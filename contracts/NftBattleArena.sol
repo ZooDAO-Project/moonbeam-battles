@@ -340,21 +340,20 @@ contract NftBattleArena
 
 		if (rewardsForEpoch[stakingPositionId][currentEpoch].votes > 0)                         // If votes for position in current epoch more than zero.
 		{
-			for(uint256 i = 0; i < numberOfNftsWithNonZeroVotes; i++)                           // Iterates for non-zero positions.
+			for(uint256 i = 0; i < numberOfNftsWithNonZeroVotes; ++i)                           // Iterates for non-zero positions.
 			{
 				if (activeStakerPositions[i] == stakingPositionId)                              // Finds this position in array of active positions.
 				{
 					// Replace this position with another position from end of array. Then shift zero positions for one point.
 					activeStakerPositions[i] = activeStakerPositions[numberOfNftsWithNonZeroVotes - 1];
-					activeStakerPositions[numberOfNftsWithNonZeroVotes - 1] = activeStakerPositions[activeStakerPositions.length - 1];
-					numberOfNftsWithNonZeroVotes--;                                             // After that decrements number of non zero positions.
+					activeStakerPositions[--numberOfNftsWithNonZeroVotes] = activeStakerPositions[activeStakerPositions.length - 1];
 					break;
 				}
 			}
 		}
 		else // If votes for position in current epoch are zero, does the same, but without decrement numberOfNftsWithNonZeroVotes.
 		{
-			for(uint256 i = numberOfNftsWithNonZeroVotes; i < activeStakerPositions.length; i++)
+			for(uint256 i = numberOfNftsWithNonZeroVotes; i < activeStakerPositions.length; ++i)
 			{
 				if (activeStakerPositions[i] == stakingPositionId)                                     // Finds this position in array.
 				{
@@ -414,7 +413,7 @@ contract NftBattleArena
 
 		if (battleReward.votes == 0)                                                            // If staker position had zero votes before,
 		{
-			for(uint256 i = 0; i < activeStakerPositions.length; i++)                           // Iterate for active staker positions.
+			for(uint256 i = 0; i < activeStakerPositions.length; ++i)                           // Iterate for active staker positions.
 			{
 				if (activeStakerPositions[i] == stakingPositionId)                              // Finds this position.
 				{
@@ -640,7 +639,7 @@ contract NftBattleArena
 		if (battleReward.votes == 0 && stakingPositionsValues[stakingPositionId].endEpoch == 0)
 		{
 			// Move staking position to part, where staked without votes.
-			for(uint256 i = 0; i < activeStakerPositions.length; i++)
+			for(uint256 i = 0; i < activeStakerPositions.length; ++i)
 			{
 				if (activeStakerPositions[i] == stakingPositionId)
 				{
@@ -675,12 +674,11 @@ contract NftBattleArena
 		yTokens = votingPosition.yTokensNumber;
 		uint256 daiInvested = votingPosition.daiInvested;
 
-		uint256 startEpoch = votingPosition.lastEpochYTokensWereDeductedForRewards;
 		uint256 endEpoch = computeLastEpoch(votingPositionId);
 
 		// From user yTokens subtract all tokens that go to the rewards
 		// This way allows to withdraw exact same amount of DAI user invested at the start
-		for (uint256 i = startEpoch; i < endEpoch; i++)
+		for (uint256 i = votingPosition.lastEpochYTokensWereDeductedForRewards; i < endEpoch; ++i)
 		{
 			if (rewardsForEpoch[stakingPositionId][i].pricePerShareCoef != 0)
 			{
@@ -813,12 +811,11 @@ contract NftBattleArena
 	{
 		VotingPosition storage votingPosition = votingPositionsValues[votingPositionId];
 
-		uint256 startEpoch = votingPosition.lastRewardedEpoch;
 		uint256 endEpoch = computeLastEpoch(votingPositionId);
 
 		uint256 stakingPositionId = votingPosition.stakingPositionId;                  // Gets staker position id from voter position.
 
-		for (uint256 i = startEpoch; i < endEpoch; i++)
+		for (uint256 i = votingPosition.lastRewardedEpoch; i < endEpoch; ++i)
 		{
 			int256 saldo = rewardsForEpoch[stakingPositionId][i].yTokensSaldo;         // Gets saldo from staker position for every epoch in range.
 
@@ -866,7 +863,7 @@ contract NftBattleArena
 
 		end = endEpoch == 0 ? currentEpoch : endEpoch;                                        // Sets end variable to endEpoch if it non-zero, otherwise to currentEpoch.
 
-		for (uint256 i = stakerPosition.lastRewardedEpoch; i < end; i++)
+		for (uint256 i = stakerPosition.lastRewardedEpoch; i < end; ++i)
 		{
 			int256 saldo = rewardsForEpoch[stakingPositionId][i].yTokensSaldo;                // Get saldo from staker position.
 
@@ -886,7 +883,7 @@ contract NftBattleArena
 		uint256 index1;                                                                       // Index of nft paired for.
 		uint256 i;
 
-		for (i = nftsInGame; i < numberOfNftsWithNonZeroVotes; i++)
+		for (i = nftsInGame; i < numberOfNftsWithNonZeroVotes; ++i)
 		{
 			if (activeStakerPositions[i] == stakingPositionId)
 			{
@@ -1035,7 +1032,7 @@ contract NftBattleArena
 		if (lastUpdateEpoch == currentEpoch)                                        // If already updated in this epoch - skip.
 			return;
 
-		for (; lastUpdateEpoch < currentEpoch; lastUpdateEpoch++)
+		for (; lastUpdateEpoch < currentEpoch; ++lastUpdateEpoch)
 		{
 			BattleRewardForEpoch storage rewardOfCurrentEpoch = rewardsForEpoch[stakingPositionId][lastUpdateEpoch + 1];
 			BattleRewardForEpoch storage rewardOflastUpdateEpoch = rewardsForEpoch[stakingPositionId][lastUpdateEpoch];
@@ -1078,7 +1075,7 @@ contract NftBattleArena
 		veZoo.updateCurrentEpochAndReturnPoolWeight(collection);
 		veZoo.updateCurrentEpochAndReturnPoolWeight(address(0));
 
-		for (uint256 i = votingPosition.lastEpochOfIncentiveReward; i < lastEpoch; i++) // Need different start epoch and last epoch.
+		for (uint256 i = votingPosition.lastEpochOfIncentiveReward; i < lastEpoch; ++i) // Need different start epoch and last epoch.
 		{
 			uint256 endEpoch = veZoo.getEpochNumber(epochsStarts[i + 1]);
 			if (endEpoch > veZoo.endEpochOfIncentiveRewards())
@@ -1089,7 +1086,7 @@ contract NftBattleArena
 
 			uint256 startEpoch = veZoo.getEpochNumber(epochsStarts[i]);
 
-			for (uint256 j = startEpoch; j < endEpoch; j++)
+			for (uint256 j = startEpoch; j < endEpoch; ++j)
 			{
 				if (veZoo.poolWeight(address(0), j) != 0 && rewardsForEpoch[stakingPositionId][i].votes != 0)
 					reward += baseVoterReward * votingPosition.daiVotes * veZoo.poolWeight(collection, j) / veZoo.poolWeight(address(0), j) / rewardsForEpoch[stakingPositionId][i].votes;
@@ -1112,7 +1109,7 @@ contract NftBattleArena
 
 		uint256 end = stakingPosition.endEpoch == 0 ? currentEpoch : stakingPosition.endEpoch;// Get recorded end epoch if it's not 0, or current epoch.
 
-		for (uint256 i = stakingPosition.lastEpochOfIncentiveReward; i < end; i++)
+		for (uint256 i = stakingPosition.lastEpochOfIncentiveReward; i < end; ++i)
 		{
 			uint256 endEpoch = veZoo.getEpochNumber(epochsStarts[i + 1]);
 			if (endEpoch > veZoo.endEpochOfIncentiveRewards())
@@ -1122,7 +1119,7 @@ contract NftBattleArena
 			}
 
 			uint256 startEpoch = veZoo.getEpochNumber(epochsStarts[i]);
-			for (uint256 j = startEpoch; j < endEpoch; j++)
+			for (uint256 j = startEpoch; j < endEpoch; ++j)
 			{
 				if (veZoo.poolWeight(address(0), j) != 0)
 					reward += baseStakerReward * veZoo.poolWeight(collection, j) / veZoo.poolWeight(address(0), j) / numberOfStakedNftsInCollection[i][collection];
@@ -1168,8 +1165,8 @@ contract NftBattleArena
 		uint256 lastUpdateEpoch = lastUpdatesOfStakedNumbers[collection];
 		if (lastUpdateEpoch == currentEpoch)
 			return;
-		uint256 start = lastUpdateEpoch > 1 ? lastUpdateEpoch : 1;
-		for (uint256 i = start; i <= currentEpoch; i++)
+		uint256 i = lastUpdateEpoch > 1 ? lastUpdateEpoch : 1;
+		for (; i <= currentEpoch; ++i)
 		{
 			numberOfStakedNftsInCollection[i][collection] += numberOfStakedNftsInCollection[i - 1][collection];
 		}

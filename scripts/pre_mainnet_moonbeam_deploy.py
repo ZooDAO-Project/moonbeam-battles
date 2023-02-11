@@ -77,6 +77,9 @@ def main():
 		well,
 		{"from": account}, publish_source=True)
 
+	# new lottery contract. last two params are rewards amount for frax and zoo.
+	winnersJackpot = winnersJackpot.deploy(functions, voting, frax, zooToken, 10**18, 10**18, {"from": account}, publish_source=True)
+
 	arena.init(x_zoo, jackpot_a, jackpot_b, wGlmr)
 	x_zoo.setNftBattleArena(arena)
 	jackpot_a.setNftBattleArena(arena)
@@ -111,7 +114,8 @@ def main():
 		"x_zoo" : x_zoo,
 		"jackpot_a" : jackpot_a,
 		"jackpot_b" : jackpot_b,
-		"arena" : arena
+		"arena" : arena,
+		"winnersJackpot" : winnersJackpot
 	}
 
 	return result
