@@ -154,7 +154,7 @@ contract XZoo is ERC721
 		zoo.transferFrom(msg.sender, address(this), amount);
 
 		uint256 currentEpoch = arena.currentEpoch();
-		position.yTokensDebt += getPendingReward(positionId);
+		position.yTokensDebt = getPendingReward(positionId);
 		if (position.startEpoch <= currentEpoch)
 			position.startEpoch = currentEpoch;
 
@@ -174,7 +174,7 @@ contract XZoo is ERC721
 		ZooStakerPosition storage position = xZooPositions[positionId];
 		require(position.endEpoch == 0);
 
-		position.yTokensDebt += getPendingReward(positionId);
+		position.yTokensDebt = getPendingReward(positionId);
 		uint256 currentEpoch = arena.currentEpoch();
 		if (position.startEpoch <= currentEpoch)
 			position.startEpoch = currentEpoch;
