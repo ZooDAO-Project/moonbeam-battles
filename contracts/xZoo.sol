@@ -149,6 +149,16 @@ contract XZoo is ERC721
 		require(ownerOf(positionId) == msg.sender);
 		ZooStakerPosition storage position = xZooPositions[positionId];
 		require(position.endEpoch == 0);
+
+		try arena.updateEpoch()
+		{
+
+		}
+		catch
+		{
+			
+		}
+
 		updateTotalStakedUpdated();
 
 		zoo.transferFrom(msg.sender, address(this), amount);
