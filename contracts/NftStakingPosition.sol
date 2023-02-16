@@ -88,6 +88,8 @@ contract NftStakingPosition is ERC721, Ownable
 
 	function batchUnstakeNft(uint256[] calldata stakingPositionIds) external
 	{
+		require(nftBattleArena.getCurrentStage() == Stage.FirstStage, "Wrong stage!");
+
 		for (uint256 i = 0; i < stakingPositionIds.length; i++)
 		{
 			require(msg.sender == ownerOf(stakingPositionIds[i]), "Not the owner of NFT");
