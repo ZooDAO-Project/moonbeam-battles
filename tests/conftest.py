@@ -18,8 +18,8 @@ def winnersJackpot(fifth_stage, WinnersJackpot, accounts):
 	(zooToken, daiToken, linkToken, nft) = fifth_stage[0]
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = fifth_stage[1]
 
-	rewardAmount = 2500 * 10 ** 18
-	winnersJackpot = WinnersJackpot.deploy(functions, voting, daiToken, zooToken, rewardAmount, rewardAmount, {"from": accounts[0]})
+	#rewardAmount = 2500 * 10 ** 18
+	winnersJackpot = WinnersJackpot.deploy(functions, voting, daiToken, zooToken, {"from": accounts[0]})
 	arena.requestRandom()
 
 	zooToken.transfer(winnersJackpot.address, 10e25, {"from": accounts[0]})
@@ -155,7 +155,14 @@ def iterable_mapping_library(IterableMapping, accounts):
 def base_zoo_functions(accounts, tokens, BaseZooFunctions):
 	(zooToken, daiToken, linkToken, nft) = tokens
 
-	return BaseZooFunctions.deploy(accounts[0], linkToken.address, {"from": accounts[0]}) # vrfCoordinator and link token addresses.
+	day = 60 * 60 * 24
+	firstStageDuration = 2 * day
+	secondStageDuration = 5 * day
+	thirdStageDuration = 1 * day
+	fourthStageDuration = 12 * day
+	fifthStageDuration = 1 * day
+
+	return BaseZooFunctions.deploy(accounts[0], linkToken.address, firstStageDuration, secondStageDuration, thirdStageDuration, fourthStageDuration, fifthStageDuration, {"from": accounts[0]}) # vrfCoordinator, link token addresses and stage durations.
 
 @pytest.fixture(scope="module")
 def jackpotA(Jackpot, staking, vault, iterable_mapping_library, base_zoo_functions, accounts):

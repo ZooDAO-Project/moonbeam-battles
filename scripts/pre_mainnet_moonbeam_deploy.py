@@ -11,7 +11,6 @@ def main():
 	token_controller = "0x8E00D5e02E65A19337Cdba98bbA9F84d4186a180"
 	well = "0x511aB53F793683763E5a8829738301368a2411E3"
 	wGlmr = "0xAcc15dC74880C9944775448304B263D191c6077F"
-
 	zooToken = "0x3907e6ff436e2b2B05D6B929fb05F14c0ee18d90"
 
 	collections = ["0x8fBE243D898e7c88A6724bB9eB13d746614D23d6", "0x139e9BA28D64da245ddB4cF9943aA34f6d5aBFc5", "0x2159762693C629C5A44Fc9baFD484f8B96713467", "0x02A6DeC99B2Ca768D638fcD87A96F6069F91287c", "0x87C359d86bD8C794124090A82E0930c3Cab88F01"]
@@ -37,7 +36,14 @@ def main():
 	# zooToken.mint("0x5232f14c6969102c1afda0c8d81758ea638c0a3b", 5e26)
 	# zooToken.mint("0x9498af223fa03a0ea9247bfb330600eec2ddc23b", 5e26)
 
-	functions = BaseZooFunctions.deploy(ZERO_ADDRESS, ZERO_ADDRESS, {"from": account}, publish_source=True)
+	day = 60 * 60 * 24
+	firstStageDuration = 2 * day
+	secondStageDuration = 5 * day
+	thirdStageDuration = 1 * day
+	fourthStageDuration = 12 * day
+	fifthStageDuration = 1 * day
+
+	functions = BaseZooFunctions.deploy(ZERO_ADDRESS, ZERO_ADDRESS, firstStageDuration, secondStageDuration, thirdStageDuration, fourthStageDuration, fifthStageDuration, {"from": account}, publish_source=True)
 	functions.setStageDuration(0, 60 * 20, {"from": account}) # 1 stage - 20 mins
 	functions.setStageDuration(1, 60 * 20, {"from": account}) # 2 stage - 20 mins
 	functions.setStageDuration(2, 60 * 20, {"from": account}) # 3 stage - 20 mins
@@ -55,11 +61,8 @@ def main():
 		{"from": account}, publish_source=True)
 
 	x_zoo = XZoo.deploy("xZoo", "XZOO", frax, zooToken, vault, {"from": account}, publish_source=True)
-
 	iterable_mapping = IterableMapping.deploy({"from": account}, publish_source=True)
-
 	jackpot_a = Jackpot.deploy(staking, vault, functions, "Jackpot A", "JKPTA", {"from": account}, publish_source=True)
-
 	jackpot_b = Jackpot.deploy(voting, vault, functions, "Jackpot B", "JKPTB", {"from": account}, publish_source=True)
 
 	arena = NftBattleArena.deploy(

@@ -41,6 +41,7 @@ def test_event(winnersJackpot, battles, tokens, accounts):
 	votes = [10, 100, 1000000000, 10000, 1000]
 	season = 1
 	daiBalance = daiToken.balanceOf(winnersJackpot)
+	zooBalance = zooToken.balanceOf(winnersJackpot)
 
 	print("dai balance", daiBalance)
 	tx = winnersJackpot.chooseWinner(participants, votes, season)
@@ -57,8 +58,8 @@ def test_event(winnersJackpot, battles, tokens, accounts):
 	assert winnerId == 6
 	assert totalParticipants == 5
 	assert totalVotes == 1000011110
-	assert fraxReward == 2500 * 10 ** 18
-	assert zooReward == 2500 * 10 ** 18
+	assert fraxReward == daiBalance
+	assert zooReward == zooBalance
 
 
 def test_balance(winnersJackpot, battles, tokens, accounts):
@@ -104,28 +105,12 @@ def test_balance(winnersJackpot, battles, tokens, accounts):
 	zooBalanceWinner1 = zooToken.balanceOf(accounts[0])
 	print("zoo balance winner", zooBalanceWinner1)
 
-	assert daiBalanceWinner1 == daiBalanceWinner + winnersJackpot.fraxReward()
-	assert zooBalanceWinner1 == zooBalanceWinner + winnersJackpot.zooReward()
+	assert daiBalanceWinner1 == daiBalanceWinner + fraxReward
+	assert zooBalanceWinner1 == zooBalanceWinner + zooReward
 
 	assert winner == accounts[0]
 	assert winnerId == 2
 	assert totalParticipants == 5
 	assert totalVotes == 100000012100000000000000000000
-	assert fraxReward == 2500 * 10 ** 18
-	assert zooReward == 2500 * 10 ** 18
-
-
-def test_setReward(winnersJackpot, battles, tokens, accounts):
-	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
-	(zooToken, daiToken, linkToken, nft) = tokens
-
-	amount = 5000 * 10 ** 18
-
-	tx = winnersJackpot.setFraxRewardAmount(amount)
-	tx.events["FraxRewardSet"]
-
-	tx1 = winnersJackpot.setZooRewardAmount(amount)
-	tx1.events["ZooRewardSet"]
-
-	assert winnersJackpot.fraxReward() == amount
-	assert winnersJackpot.zooReward() == amount
+	assert fraxReward == daiBalance
+	assert zooReward == zooBalance

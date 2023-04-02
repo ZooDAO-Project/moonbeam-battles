@@ -13,10 +13,16 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 {
 	NftBattleArena public battles;
 
-	constructor (address _vrfCoordinator, address _link) VRFConsumerBase(_vrfCoordinator, _link) 
+	constructor (address _vrfCoordinator, address _link, uint256 firstStage, uint256 secondStage, uint256 thirdStage, uint256 fourthstage, uint256 fifthstage) VRFConsumerBase(_vrfCoordinator, _link) 
 	{
 		chainLinkFee = 0.1 * 10 ** 18;
 		keyHash = 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4;
+
+		firstStageDuration = firstStage;      // Duration of first stage(stake).
+		secondStageDuration = secondStage;    // Duration of second stage(DAI).
+		thirdStageDuration = thirdStage;      // Duration of third stage(Pair).
+		fourthStageDuration = fourthstage;    // Duration fourth stage(ZOO).
+		fifthStageDuration = fifthstage;      // Duration of fifth stage(Winner).
 	}
 
 	mapping (uint256 => uint256) public randomNumberByEpoch;
@@ -28,11 +34,11 @@ contract BaseZooFunctions is Ownable, VRFConsumerBase
 	bool public isRandomRequested;
 	uint256 internal randomResult;  // Random number for battles.
 
-	uint256 public firstStageDuration = 2 days;    // Duration of first stage(stake).
-	uint256 public secondStageDuration = 5 days;    // Duration of second stage(DAI).
-	uint256 public thirdStageDuration = 1 days;    // Duration of third stage(Pair).
-	uint256 public fourthStageDuration = 12 days;    // Duration fourth stage(ZOO).
-	uint256 public fifthStageDuration = 1 days;    // Duration of fifth stage(Winner).
+	uint256 public firstStageDuration;      // Duration of first stage(stake).
+	uint256 public secondStageDuration;     // Duration of second stage(DAI).
+	uint256 public thirdStageDuration;      // Duration of third stage(Pair).
+	uint256 public fourthStageDuration;     // Duration fourth stage(ZOO).
+	uint256 public fifthStageDuration;      // Duration of fifth stage(Winner).
 	
 	/// @notice Function for setting address of _nftBattleArena contract.
 	/// @param _nftBattleArena - address of _nftBattleArena contract.

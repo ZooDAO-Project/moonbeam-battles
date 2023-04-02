@@ -172,8 +172,8 @@ contract NftBattleArena
 	address public nftStakingPosition;
 	address public nftVotingPosition;
 
-	uint256 public baseStakerReward = 62500 * 10 ** 18;  // todo: check amount
-	uint256 public baseVoterReward = 500000 * 10 ** 18;  // todo: check amount
+	uint256 public baseStakerReward = 12500 * 10 ** 18;
+	uint256 public baseVoterReward = 75000 * 10 ** 18;
 
 	// epoch number => index => NftPair struct.
 	mapping (uint256 => NftPair[]) public pairsInEpoch;                            // Records info of pair in struct per battle epoch.

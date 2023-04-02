@@ -1,5 +1,6 @@
 import brownie
 from brownie import chain
+import pytest
 
 
 #
@@ -361,20 +362,28 @@ def test_emitting_event(accounts, battles, tokens):
 	assert event["stakingPositionId"] == 1
 
 
-# TODO: unstake is very insufficient in gas :(
-def _test_gas_efficiency(accounts, battles, tokens):
+# TODO: unstake and withdraw are very inefficient in gas :(
+# unstake and withdraw has linear progressing difficulty
+
+# For moonbeam it takes ~6000 NFTs to reach block gas limit
+# And for ethereum it takes ~2000 NFTs to reach block gas limit
+
+# With nftsByAccount = 100 it takes 1,5 hours(!!!) to complete this test on hardhat network (ganache is slower)
+# There is not assertions it's only meant to check gas expenditure on unstakeNFT and withdrawDai functions
+@pytest.mark.skip
+def test_gas_efficiency(accounts, battles, tokens):
 	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = battles
 	(zooToken, daiToken, linkToken, nft) = tokens
 
-	
-
 	nftsByAccount = 10
-	nft.batchMint(list(accounts), nftsByAccount, _from(accounts[0]))
+	
+	for account in list(accounts):
+		nft.batchMint([account], nftsByAccount, _from(accounts[0]))
 
 	# Stake all NFTs
 	for i in range(len(accounts)):
 		nft.setApprovalForAll(staking, True, _from(accounts[i]))
-
+		print('Stake', i)
 		for j in range(nftsByAccount):
 			tokenId = 10 + j + i * nftsByAccount # 9 - already minted in conftest
 			staking.stakeNft(nft, tokenId, _from(accounts[i]))
@@ -382,9 +391,10 @@ def _test_gas_efficiency(accounts, battles, tokens):
 	# Wait for voting
 	chain.sleep(arena.firstStageDuration())
 
-	daiToken.approve(voting, 100e18, _from(accounts[1]))
+	daiToken.approve(voting, 10000e18, _from(accounts[1]))
 
-	for i in range(100):
+	for i in range(1, len(accounts) * nftsByAccount):
+		print('Vote', i)
 		voting.createNewVotingPosition(i, 1e18, _from(accounts[1]))
 
 	# Sleep until firstStage
@@ -394,8 +404,18 @@ def _test_gas_efficiency(accounts, battles, tokens):
 	chain.sleep(arena.fifthStageDuration())
 
 	arena.updateEpoch()
+	
+	for i in reversed(range(1, len(accounts) * nftsByAccount)):
+		print('Withdraw vote', i)
+		voting.withdrawDaiFromVotingPosition(i, accounts[1], 1e18, _from(accounts[1]))
 
-	tx = staking.unstakeNft(10 * nftsByAccount, _from(accounts[9]))
-	assert tx.status == 1
+	for i in range(len(accounts)):
+		print('Unstake', i)
+
+		for j in range(1, nftsByAccount):
+			tokenId = i * nftsByAccount + j
+			staking.unstakeNft(tokenId, _from(accounts[i]))
+
+
 
 

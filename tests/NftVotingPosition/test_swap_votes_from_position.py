@@ -34,13 +34,13 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(1)["endEpoch"] == 0
 	assert arena.votingPositionsValues(1)["zooInvested"] == initialAmount
 	assert daiToken.balanceOf(account0) == 39999700000000000000000000
-	assert zooToken.balanceOf(account0) == 113749600000000000000000000
+	zooBalance = zooToken.balanceOf(account0) # 113749600000000000000000000
 
 	assert arena.votingPositionsValues(4)["daiInvested"] == initialAmount
 	assert arena.votingPositionsValues(4)["endEpoch"] == 0
 	assert arena.votingPositionsValues(4)["zooInvested"] == initialAmount
 	assert daiToken.balanceOf(account1) == 39999600000000000000000000
-	assert zooToken.balanceOf(account1) == 39999700000000000000000000
+	zooBalance1 = zooToken.balanceOf(account1) # 39999700000000000000000000
 
 	assert arena.votingPositionsValues(2)["daiInvested"] == initialAmount
 
@@ -64,7 +64,7 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(1)["endEpoch"] == 0
 	assert arena.votingPositionsValues(1)["zooInvested"] == (initialAmount - swapAmount)
 	assert daiToken.balanceOf(account0) == 39999700000000000000000000
-	assert zooToken.balanceOf(account0) == 113749609950000000000000000
+	assert zooToken.balanceOf(account0) == zooBalance + swapAmount - (swapAmount / 1000 * 5) # 113749609950000000000000000
 
 	assert arena.votingPositionsValues(4)["daiInvested"] == (initialAmount - swapAmount) # dai withdrawed
 	assert arena.votingPositionsValues(4)["endEpoch"] == 0
@@ -74,7 +74,7 @@ def test_multiplie_swaps(accounts, finished_epoch):
 	assert arena.votingPositionsValues(5)["endEpoch"] == 2
 	assert arena.votingPositionsValues(5)["zooInvested"] == initialAmount
 	assert daiToken.balanceOf(account1) == 39999600000000000000000000
-	assert zooToken.balanceOf(account1) == 39999809450000000000000000
+	assert zooToken.balanceOf(account1) == zooBalance1 + swapAmount - (swapAmount / 1000 * 5) + initialAmount - (initialAmount / 1000 * 5) #39999809450000000000000000
 
 	assert arena.votingPositionsValues(2)["daiInvested"] == (initialAmount + swapAmount) # dai added
 

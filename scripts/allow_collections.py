@@ -1,7 +1,7 @@
 from brownie import *
 
 
-def main(ve_zoo):
+def main():
 
 	active_network = network.show_active()
 	account = accounts.load(active_network)
@@ -44,7 +44,14 @@ def main(ve_zoo):
 	"0x4316f538ed997e2e92ab92ee5c1b9f126e21578e", # Cosmos Kidz
 	"0x332d68561a7aee5879a369411e059856d4580094", # Feline Fiendz
 	"0xBc6219FC9f3521A8A566359906D6D0689c53DAcC", # Moonwalkers
-	"0xbe1f1f4e1a4907d3a6debc110e1e9f551909c89c"] # ZOO DAO GEN 0
+	"0xbe1f1f4e1a4907d3a6debc110e1e9f551909c89c", # ZOO DAO GEN 0
+	"0x129f156FC1EF1EDF48186a123804B1510637F71B", # Mecha Melters
+	"0xA521e4cAe215cb56DF9Cf09b8A81a113A16C7C11", # Creepy Creams
+	"0x43BaA338734C1387391bb3C9a8Dd6952C46D1223", # Toshies
+	"0x135092F51D80E92185f8dA8a400b3828b3c4C094", # The Alien Boy
+	"0xa29b7e9dC598bFF4034758d91E0272d62ED6d3fB", # The Surreals
+	"0x0F00f81162ABC95Ee6741a802A1218C67C42e714", # Divine Anarchy
+	"0xC75DEb97Ca0AFCB9f25c38d72ad34f22D6c58260"] # Gh0stly Gh0st
 
 
 	royalty = ["0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Alley Katz
@@ -65,7 +72,7 @@ def main(ve_zoo):
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Meta Eagle Club
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # MetaTravelers
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Monster Shelter
-	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # MoonCats
+	"0xdf2E60Af57C411F848B1eA12B10a404d194bce27", # MoonCats
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # PixaWizards
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Polymorphs
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Purr Evil
@@ -81,12 +88,19 @@ def main(ve_zoo):
 	"0xd8C81D0706a027B870c20cC386BBffb15A36815e", # GLMR Apes
 	"0xa25b6FefE3e397E179DB42837a5e424120243E6A", # Canary Network Agency
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Party Bears
-	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Lyke Island Inhabitants
+	"0x9b8dC77FE4E9eC716C8B66a5e20AECE6E323bC5C", # Lyke Island Inhabitants
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Cosmos Kidz
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Feline Fiendz
 	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Moonwalkers
-	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b"] # ZOO DAO GEN 0
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # ZOO DAO GEN 0
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Mecha Melters
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Creepy Creams
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # Toshies
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # The Alien Boy
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b", # The Surreals
+	"0x650802BD9dF24DF295241684185265196f88BA7D", # Divine Anarchy
+	"0x24410c1d93d1216E126b6A6cd32d79f634308b3b"] # Gh0stly Gh0st
 
-	### Currently, total of 39 collections and royalte recipient.
-
+	### Currently, total of 46 collections and royalte recipient.
+	ve_zoo = ListingList.at("0x1BD77C71568f723D6906EA80FEE45f1F52834c15")
 	ve_zoo.batchAllowNewContract(collections, royalty, {"from": account})

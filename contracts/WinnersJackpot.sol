@@ -2,7 +2,6 @@ pragma solidity 0.8.13;
 
 // SPDX-License-Identifier: MIT
 
-
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC721/IERC721.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC20/IERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
@@ -19,9 +18,6 @@ contract WinnersJackpot is Ownable
 
 	IZooFunctions public zooFunctions;
 
-	uint256 public fraxReward;
-	uint256 public zooReward;
-
 	// battle season => id of position
 	mapping (uint256 => uint256) public winners;
 
@@ -30,19 +26,12 @@ contract WinnersJackpot is Ownable
 
 	event WinnerChosen(uint256 indexed season, address indexed winner, uint256 indexed winnerId, uint256 totalParticipants, uint256 totalVotes, uint256 fraxReward, uint256 zooReward);
 
-	event FraxRewardSet(uint256 amount);
-
-	event ZooRewardSet(uint256 amount);
-
-	constructor (address _functions, address _votingPosition, address _frax, address _zoo, uint256 _fraxReward, uint256 _zooReward)
+	constructor (address _functions, address _votingPosition, address _frax, address _zoo)
 	{
 		frax = IERC20(_frax);
 		zoo = IERC20(_zoo);
 		zooFunctions = IZooFunctions(_functions);
 		votingPosition = IERC721(_votingPosition);
-
-		fraxReward = _fraxReward;
-		zooReward = _zooReward;
 	}
 
 	/// @notice Function to choose jackpot winner in selected season.
@@ -74,6 +63,8 @@ contract WinnersJackpot is Ownable
 				break;
 			}
 		}
+		uint256 fraxReward = frax.balanceOf(address(this));
+		uint256 zooReward = frax.balanceOf(address(this));
 
 		address winner = votingPosition.ownerOf(winners[season]); // Get the owner of winners position.
 		frax.transfer(winner, fraxReward);         // Transfer reward in frax.
@@ -88,22 +79,6 @@ contract WinnersJackpot is Ownable
 	function checkWinner(uint256 season) public view returns (uint256 positionId)
 	{
 		return winners[season];
-	}
-
-	/// @notice Function to set fraxReward amount for a new value.
-	function setFraxRewardAmount(uint256 amount) external onlyOwner
-	{
-		fraxReward = amount;
-
-		emit FraxRewardSet(amount);
-	}
-
-	/// @notice Function to set zooReward amount for a new value.
-	function setZooRewardAmount(uint256 amount) external onlyOwner
-	{
-		zooReward = amount;
-
-		emit ZooRewardSet(amount);
 	}
 
 	/// @notice Function to return tokens, in case something went wrong.
