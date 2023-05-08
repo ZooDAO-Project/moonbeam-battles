@@ -14,20 +14,6 @@ def isolate(fn_isolation):
 	pass
 
 @pytest.fixture(scope="module")
-def winnersJackpot(fifth_stage, WinnersJackpot, accounts):
-	(zooToken, daiToken, linkToken, nft) = fifth_stage[0]
-	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = fifth_stage[1]
-
-	#rewardAmount = 2500 * 10 ** 18
-	winnersJackpot = WinnersJackpot.deploy(functions, voting, daiToken, zooToken, {"from": accounts[0]})
-	arena.requestRandom()
-
-	zooToken.transfer(winnersJackpot.address, 10e25, {"from": accounts[0]})
-	daiToken.mint(winnersJackpot.address, 10e25, {"from": accounts[0]})
-
-	return (winnersJackpot)
-
-@pytest.fixture(scope="module")
 def listingListForUnitTest(accounts, tokens, ListingList):
 	zooToken = tokens[0]
 	min_timelock = 1814400
@@ -365,3 +351,17 @@ def finished_epoch(fifth_stage):
 	chain.mine(1)
 
 	return ((zooToken, daiToken, linkToken, nft), (vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB))
+
+@pytest.fixture(scope="module")
+def winnersJackpot(fifth_stage, WinnersJackpot, accounts):
+	(zooToken, daiToken, linkToken, nft) = fifth_stage[0]
+	(vault, functions, governance, staking, voting, arena, listing, xZoo, jackpotA, jackpotB) = fifth_stage[1]
+
+	#rewardAmount = 2500 * 10 ** 18
+	winnersJackpot = WinnersJackpot.deploy(functions, voting, daiToken, zooToken, jackpotB, {"from": accounts[0]})
+	arena.requestRandom()
+
+	zooToken.transfer(winnersJackpot.address, 10e25, {"from": accounts[0]})
+	daiToken.mint(winnersJackpot.address, 10e25, {"from": accounts[0]})
+
+	return (winnersJackpot)

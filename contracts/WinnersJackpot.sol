@@ -6,12 +6,14 @@ import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC721/IERC721
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/token/ERC20/IERC20.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.5.0/contracts/access/Ownable.sol";
 import "./interfaces/IZooFunctions.sol";
+import "./Jackpot.sol";
 
 /// @title WinnersJackpot
 /// @notice contract for jackpot reward from arena.
 contract WinnersJackpot is Ownable
 {
 	IERC721 public votingPosition;
+	Jackpot public jackpot;
 
 	IERC20 public frax;
 	IERC20 public zoo;
@@ -26,12 +28,13 @@ contract WinnersJackpot is Ownable
 
 	event WinnerChosen(uint256 indexed season, address indexed winner, uint256 indexed winnerId, uint256 totalParticipants, uint256 totalVotes, uint256 fraxReward, uint256 zooReward);
 
-	constructor (address _functions, address _votingPosition, address _frax, address _zoo)
+	constructor (address _functions, address _votingPosition, address _frax, address _zoo, address _jackpot)
 	{
 		frax = IERC20(_frax);
 		zoo = IERC20(_zoo);
 		zooFunctions = IZooFunctions(_functions);
 		votingPosition = IERC721(_votingPosition);
+		jackpot = Jackpot(_jackpot);
 	}
 
 	/// @notice Function to choose jackpot winner in selected season.
@@ -63,10 +66,22 @@ contract WinnersJackpot is Ownable
 				break;
 			}
 		}
+
 		uint256 fraxReward = frax.balanceOf(address(this));
-		uint256 zooReward = frax.balanceOf(address(this));
+		uint256 zooReward = zoo.balanceOf(address(this));
 
 		address winner = votingPosition.ownerOf(winners[season]); // Get the owner of winners position.
+		if (winner == address(jackpot))
+		{
+			for (uint256 i = 1; i < jackpot.positionIndex(); i++)
+			{
+				if (jackpot.stakedPositionsById(i) == winners[season])
+				{
+					winner = jackpot.ownerOf(i);
+				}
+			}
+		}
+
 		frax.transfer(winner, fraxReward);         // Transfer reward in frax.
 		zoo.transfer(winner, zooReward);          // Transfer reward in zoo.
 
